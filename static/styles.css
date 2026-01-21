@@ -1,0 +1,176 @@
+/* =========================
+   Base
+========================= */
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --text: #111;
+  --muted: rgba(0, 0, 0, 0.7);
+  --border: #e5e5e5;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --radius-lg: 16px;
+  --radius-md: 12px;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =========================
+   Tabs / Panels
+========================= */
+.nav-tabs .nav-link {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tab-content {
+  padding: 20px;
+  background: var(--surface);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 제목 */
+h1 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* =========================
+   Chart Cards
+========================= */
+.chart-card {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden; /* Plotly 내부 요소가 튀어나오는 것 방지 */
+}
+
+.chart-title {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+/* Plotly 컨테이너는 JS에서 width/height를 잡으므로
+   CSS에서 고정 height를 과하게 주지 않는 쪽이 안전 */
+.chart-box {
+  width: 100%;
+  min-height: 360px; /* 기본 최소 높이만 */
+  display: block;
+  position: relative;
+}
+
+/* Plotly 내부 폭 강제 */
+.chart-card .js-plotly-plot,
+.chart-card .plot-container,
+.chart-card .svg-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 모드바가 카드 안쪽에 머물도록 */
+.chart-card .modebar {
+  right: 8px !important;
+}
+
+/* =========================
+   Special Plot Min Heights
+   (필요하면 카드별로 id로 살짝만)
+========================= */
+#profit-chart { min-height: 450px; }
+#pie-chart { min-height: 450px; }
+#sp500-treemap,
+#portfolio-treemap,
+#exchange-rate-chart {
+  min-height: 440px;
+}
+
+/* =========================
+   Portfolio / Forms
+========================= */
+form {
+  margin: 20px auto;
+  width: 100%;
+  max-width: 900px; /* 80% 대신 안정적인 max-width */
+  text-align: left;
+  padding: 10px;
+  background-color: var(--surface);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* 기존 label 정렬 스타일은 bootstrap input-group과 충돌 가능성이 큼
+   input-group 쓰는 폼에서는 label/width 강제하지 않는 게 안전 */
+form label {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+form input, form button {
+  margin-bottom: 10px;
+}
+
+form button {
+  margin: 0 auto;
+}
+
+/* =========================
+   Privacy toggle
+========================= */
+.privacy-sensitive {
+  transition: visibility 0.3s ease;
+}
+
+/* =========================
+   Market Cards (요약 카드)
+   ⚠️ Bootstrap .card와 이름 충돌 방지: .mini-card로 변경 권장
+========================= */
+.market-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* 기존 .card는 bootstrap과 충돌 가능성이 높아서 별도 클래스 권장
+   (JS/HTML도 같이 바꾸는 게 베스트) */
+.mini-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: var(--surface);
+}
+
+.mini-card-title {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.mini-card-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.mini-card-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+@media (max-width: 900px) {
+  .market-cards {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
