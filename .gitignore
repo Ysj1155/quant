@@ -1,0 +1,66 @@
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*.so
+*.egg-info/
+build/
+dist/
+
+# ----------------------
+# Virtual environments
+# ----------------------
+.venv/
+venv/
+ENV/
+env/
+Lib/
+Scripts/
+pyvenv.cfg
+share/
+
+# ----------------------
+# IDE / OS
+# ----------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# Secrets
+# ----------------------
+.env
+.env.*
+!.env.example
+
+# ----------------------
+# Project-specific: local libs / private modules
+# ----------------------
+pykis/
+
+# ----------------------
+# Data files (keep folder, ignore csv)
+# ----------------------
+data/**/*.csv
+data/**/*.CSV
+data/**/*.xlsx
+data/**/*.xls
+
+# ----------------------
+# Outputs / artifacts
+# ----------------------
+results/
+plots/
+*.log
+*.png
+
+# 캐시/세션 산출물
+.cache/
+
+# pdf
+*.pdf

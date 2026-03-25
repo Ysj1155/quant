@@ -65,8 +65,3 @@ def health():
 def clear_cache():
     cache.clear()
     return jsonify({"ok": True, "message": "cache cleared"})
-
-@health_bp.route("/api/cache/clear", methods=["POST"])
-def clear_cache():
-    cache.clear()
-    return jsonify({"ok": True})

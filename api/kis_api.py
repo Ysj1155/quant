@@ -6,7 +6,6 @@ import time
 from dotenv import load_dotenv
 
 import requests
-import pykis
 
 from config import ACCOUNT_NO
 from extensions import cache
@@ -18,12 +17,6 @@ APP_SECRET = os.getenv("secretkey")
 URL_BASE = "https://openapivts.koreainvestment.com:29443"
 
 ACCOUNT_CODE, PRODUCT_CODE = ACCOUNT_NO.split("-")[0], ACCOUNT_NO.split("-")[1]
-
-key_info = {"appkey": APP_KEY, "appsecret": APP_SECRET}
-account_info = {"account_code": ACCOUNT_CODE, "product_code": PRODUCT_CODE}
-
-domain_info = pykis.DomainInfo(kind="virtual")
-api = pykis.Api(key_info=key_info, domain_info=domain_info, account_info=account_info)
 
 _kis_token = None
 _kis_token_expiry = 0

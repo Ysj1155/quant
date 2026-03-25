@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import re
-from db.migration import clean_int, clean_float, get_connection
 
 # 경로 설정
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,40 +34,40 @@ def get_latest_csv():
 # --- 기존 app.py와 호환성을 위해 이름을 유지한 개선 함수들 ---
 
 def process_account_value():
-    """ 모든 CSV를 읽어 DB의 account_value 테이블에 누적 업데이트 (Upsert) """
+    """모든 원본 CSV를 읽어 account_value.csv 생성"""
     csv_files = get_all_csv_files()
     if not csv_files:
+        print("⚠️ account_value용 CSV 파일이 없습니다.")
         return
 
     records = []
     for csv_file in csv_files:
         file_date = extract_date_from_filename(csv_file)
         file_path = os.path.join(DATA_DIR, csv_file)
+
         try:
             df = pd.read_csv(file_path, encoding="utf-8-sig")
-            # 평가금액 합계 계산
             total_val = df["평가금액"].replace({',': ''}, regex=True).astype(float).sum()
-            records.append((file_date, int(total_val)))
+            records.append({
+                "date": file_date,
+                "total_value": int(total_val)
+            })
         except Exception as e:
             print(f"⚠️ {csv_file} 파싱 실패: {e}")
 
-    # DB에 Upsert (ON DUPLICATE KEY UPDATE)
-    conn = get_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.executemany("""
-                INSERT INTO account_value (date, total_value) 
-                VALUES (%s, %s)
-                ON DUPLICATE KEY UPDATE total_value = VALUES(total_value)
-            """, records)
-        conn.commit()
-        print(f"✅ DB account_value 누적 완료 ({len(records)}건)")
-    finally:
-        conn.close()
+    if not records:
+        print("⚠️ account_value.csv로 저장할 데이터가 없습니다.")
+        return
+
+    account_value_df = pd.DataFrame(records)
+    account_value_df = account_value_df.sort_values("date").drop_duplicates(subset=["date"], keep="last")
+
+    account_value_df.to_csv(ACCOUNT_VALUE_FILE, index=False, encoding="utf-8-sig")
+    print(f"✅ account_value.csv 생성 완료 ({len(account_value_df)}건)")
 
 
 def process_portfolio_data():
-    """ 최신 CSV를 가공하여 portfolio_data.csv 생성 및 DB portfolio 업데이트 """
+    """최신 CSV를 가공하여 portfolio_data.csv 생성"""
     latest_csv = get_latest_csv()
     if not latest_csv:
         return

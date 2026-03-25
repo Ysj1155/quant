@@ -66,12 +66,12 @@ def get_pie_chart_data():
 @portfolio_bp.route("/get_account_value_data")
 @cache.cached(timeout=60)
 def get_account_value_data():
+    conn = None
     try:
         conn = get_connection()
         with conn.cursor(dictionary=True) as cur:
             cur.execute("SELECT date, total_value FROM account_value ORDER BY date ASC")
             rows = cur.fetchall()
-        conn.close()
 
         if not rows:
             return jsonify({"error": "No account value data found"}), 500
@@ -79,7 +79,7 @@ def get_account_value_data():
         dates = [str(row["date"]) for row in rows]
         values = [row["total_value"] for row in rows]
         base = values[0]
-        profits = [(v - base) / base * 100 for v in values]
+        profits = [0 for _ in values] if base == 0 else [((v - base) / base) * 100 for v in values]
 
         return jsonify({
             "dates": dates,
@@ -90,6 +90,9 @@ def get_account_value_data():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 
 @portfolio_bp.route("/get_portfolio_sector_data")

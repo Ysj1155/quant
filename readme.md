@@ -157,4 +157,3 @@ quant/
   - `csv_manager.py` 자동 호출 + `migration.py` 연동으로 앱 실행 시 최신 CSV 반영 후 DB 마이그레이션 동작
   - `with conn.cursor(...)` 패턴 일괄 적용으로 안정성 확보:contentReference[oaicite:3]{index=3}
 ##
-

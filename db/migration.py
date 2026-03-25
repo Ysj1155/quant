@@ -74,6 +74,9 @@ def migrate_portfolio(csv_path: str = "data/portfolio_data.csv"):
     try:
         _begin(conn)
         with conn.cursor() as cur:
+            if not rows_current:
+                raise ValueError("portfolio_data.csv 에 유효한 행이 없습니다. portfolio 테이블 삭제를 중단합니다.")
+
             # [성능 개선 1] 현재 잔고는 기존처럼 유지하되 트랜잭션 보장
             cur.execute("DELETE FROM portfolio")
             cur.executemany("""
