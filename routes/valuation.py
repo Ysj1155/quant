@@ -1,7 +1,7 @@
 #routes/valuation.py
 from flask import Blueprint, jsonify, request
 from extensions import cache
-from api.finnhub_api import get_metrics_raw, get_quote_raw
+from api.finnhub_api import get_metrics_raw, get_quote_raw, get_price_target_raw
 from services.valuation import fair_price_from_ev_shares
 
 valuation_bp = Blueprint("valuation", __name__)
@@ -28,6 +28,8 @@ def valuation():
     shares = metric.get("sharesOutstanding") or metric.get("shareOutstanding") or None
     my = fair_price_from_ev_shares(ev, shares)
 
+    target = get_price_target_raw(ticker) or {}
+
     pos = None
     try:
         if price is not None and hi52 is not None and lo52 is not None:
@@ -41,6 +43,12 @@ def valuation():
         "ticker": ticker,
         "price": price,
         "my_model": my,
+        "finnhub_target": {
+            "targetHigh": target.get("targetHigh"),
+            "targetLow": target.get("targetLow"),
+            "targetMean": target.get("targetMean"),
+            "targetMedian": target.get("targetMedian"),
+        },
         "signals": {
             "per_ttm": per,
             "beta": beta,

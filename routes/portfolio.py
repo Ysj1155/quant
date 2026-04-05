@@ -9,7 +9,7 @@ from domain.sector import (
     get_sector_for_symbol, add_to_bucket
 )
 
-from services.portfolio import build_pnl_from_snapshots, build_pnl_series
+from services.portfolio import build_pnl_from_snapshots, build_pnl_series, build_pnl_timeseries
 from services.snapshots import list_snapshot_dates, load_snapshot
 
 portfolio_bp = Blueprint("portfolio", __name__)
@@ -159,6 +159,13 @@ def api_pnl_events():
         events = [e for e in events if e.get("date") == date]
 
     return jsonify({"ok": True, "events": events})
+
+@portfolio_bp.route("/api/pnl/series")
+@cache.cached(timeout=60)
+def api_pnl_series():
+    data = build_pnl_timeseries()
+    status = 200 if data.get("ok") else 500
+    return jsonify(data), status
 
 
 # -----------------------------

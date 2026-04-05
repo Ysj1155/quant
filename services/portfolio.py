@@ -137,6 +137,70 @@ def build_pnl_from_snapshots(asof_date: Optional[str] = None) -> Dict:
         "realized": realized,
     }
 
+@cache.memoize(timeout=60)
+def build_pnl_timeseries() -> Dict:
+    """
+    차트용 시계열 생성:
+    - dates: 스냅샷 날짜 목록
+    - unrealized_pnl: 각 날짜 기준 보유 종목의 미실현 손익 합
+    - realized_pnl_cum: 실현손익 추정 누적합
+    - events: build_pnl_series() 에서 계산된 매도 이벤트
+    """
+    dates = list_snapshot_dates()
+    if not dates:
+        return {
+            "ok": False,
+            "error": "no snapshot dates",
+            "dates": [],
+            "unrealized_pnl": [],
+            "realized_pnl_cum": [],
+            "events": [],
+        }
+
+    # 1) 날짜별 미실현 손익 합계
+    unrealized_pnl: List[float] = []
+    for d in dates:
+        df = _holdings_df_from_snapshot(d)
+        if df.empty or "pnl" not in df.columns:
+            unrealized_pnl.append(0.0)
+        else:
+            vals = pd.to_numeric(df["pnl"], errors="coerce").fillna(0.0)
+            unrealized_pnl.append(float(vals.sum()))
+
+    # 2) 이벤트 기반 실현손익 누적합
+    series_data = build_pnl_series()
+    if not series_data.get("ok"):
+        return {
+            "ok": False,
+            "error": series_data.get("error", "failed to build pnl series"),
+            "dates": dates,
+            "unrealized_pnl": unrealized_pnl,
+            "realized_pnl_cum": [0.0 for _ in dates],
+            "events": [],
+        }
+
+    events = series_data.get("events", []) or []
+
+    realized_by_date: Dict[str, float] = {d: 0.0 for d in dates}
+    for e in events:
+        d = e.get("date")
+        if d not in realized_by_date:
+            continue
+        realized_by_date[d] += float(e.get("realized_pnl_est", 0.0) or 0.0)
+
+    realized_pnl_cum: List[float] = []
+    running = 0.0
+    for d in dates:
+        running += realized_by_date.get(d, 0.0)
+        realized_pnl_cum.append(float(running))
+
+    return {
+        "ok": True,
+        "dates": dates,
+        "unrealized_pnl": unrealized_pnl,
+        "realized_pnl_cum": realized_pnl_cum,
+        "events": events,
+    }
 
 @cache.memoize(timeout=60)
 def build_pnl_series() -> Dict:
