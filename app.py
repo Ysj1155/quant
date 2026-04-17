@@ -1,20 +1,19 @@
 # app.py
-from flask import Flask, render_template
-from markupsafe import Markup
-import markdown
 import os
 
-from db.migration import migrate_portfolio, migrate_account_value
+import markdown
 from data.csv_manager import process_account_value, process_portfolio_data
-
+from db.migration import migrate_portfolio, migrate_account_value
+from extensions import cache
+from flask import Flask, render_template
+from markupsafe import Markup
+from routes.fx_forecast import fx_forecast_bp
+from routes.health import health_bp
 from routes.market import market_bp
 from routes.portfolio import portfolio_bp
-from routes.watchlist import watchlist_bp
 from routes.stocks import stocks_bp
 from routes.valuation import valuation_bp
-from routes.health import health_bp
-
-from extensions import cache
+from routes.watchlist import watchlist_bp
 
 AUTO_REFRESH_CSV = os.getenv("AUTO_REFRESH_CSV", "false").lower() in ("1", "true", "yes", "y")
 
@@ -64,6 +63,7 @@ app.register_blueprint(market_bp)
 app.register_blueprint(stocks_bp)
 app.register_blueprint(health_bp)
 app.register_blueprint(valuation_bp)
+app.register_blueprint(fx_forecast_bp)
 
 
 @app.route("/")
