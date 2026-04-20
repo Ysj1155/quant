@@ -7,6 +7,7 @@ from db.migration import migrate_portfolio, migrate_account_value
 from extensions import cache
 from flask import Flask, render_template
 from markupsafe import Markup
+from routes.account_forecast import account_forecast_bp
 from routes.fx_forecast import fx_forecast_bp
 from routes.health import health_bp
 from routes.market import market_bp
@@ -64,6 +65,7 @@ app.register_blueprint(stocks_bp)
 app.register_blueprint(health_bp)
 app.register_blueprint(valuation_bp)
 app.register_blueprint(fx_forecast_bp)
+app.register_blueprint(account_forecast_bp)
 
 
 @app.route("/")
