@@ -174,3 +174,45 @@ form button {
     grid-template-columns: repeat(2, minmax(140px, 1fr));
   }
 }
+
+/* =========================
+   딥러닝용 지표
+========================= */
+.regime-card {
+  min-width: 220px;
+}
+
+.regime-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.regime-normal {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.regime-caution {
+  background: #fff8e1;
+  color: #8d6e00;
+}
+
+.regime-riskoff {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.regime-panic {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.regime-reasons {
+  margin-top: 6px;
+  line-height: 1.4;
+  white-space: normal;
+}

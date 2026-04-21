@@ -1,11 +1,14 @@
-# routes/market.py
 from flask import Blueprint, jsonify
 from extensions import cache
 
 import pandas as pd
 import FinanceDataReader as fdr
 
-from services.market import get_nasdaq_panic, get_indices_snapshot
+from services.market import (
+    get_indices_snapshot,
+    get_market_regime,
+    get_nasdaq_panic,
+)
 
 market_bp = Blueprint("market", __name__)
 
@@ -15,21 +18,37 @@ market_bp = Blueprint("market", __name__)
 def market_panic():
     return jsonify(get_nasdaq_panic(window_days=21, drop_pct=-3.3, lookback_days=120))
 
+
 # 주요 지수 스냅샷 (1분 캐시)
 @market_bp.route("/api/market/indices")
 @cache.cached(timeout=60)
 def market_indices():
     return jsonify(get_indices_snapshot())
 
+
+# 시장 상태 분류기 (5분 캐시)
+@market_bp.route("/api/market/regime")
+@cache.cached(timeout=60 * 5)
+def market_regime():
+    return jsonify(get_market_regime())
+
+
 # 섹터 트리맵 (1시간 캐시)
 @market_bp.route("/get_treemap_data")
 @cache.cached(timeout=60 * 60)
 def get_treemap_data():
     sectors = {
-        "Technology": "XLK", "Financials": "XLF", "Communication": "XLC",
-        "Healthcare": "XLV", "Consumer Discretionary": "XLY", "Consumer Defensive": "XLP",
-        "Industrials": "XLI", "Real Estate": "XLRE", "Energy": "XLE",
-        "Utilities": "XLU", "Materials": "XLB"
+        "Technology": "XLK",
+        "Financials": "XLF",
+        "Communication": "XLC",
+        "Healthcare": "XLV",
+        "Consumer Discretionary": "XLY",
+        "Consumer Defensive": "XLP",
+        "Industrials": "XLI",
+        "Real Estate": "XLRE",
+        "Energy": "XLE",
+        "Utilities": "XLU",
+        "Materials": "XLB",
     }
 
     sector_data = []
@@ -44,6 +63,7 @@ def get_treemap_data():
         "sectors": df_sectors["Sector"].tolist(),
         "changes": df_sectors["Change"].tolist()
     })
+
 
 # 환율 (6시간 캐시)
 @market_bp.route("/get_exchange_rate_data")
