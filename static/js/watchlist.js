@@ -80,7 +80,7 @@ window.openStockDetail = function (ticker) {
 
   content.innerHTML = `<p>🔄 데이터 로딩중...</p>`;
 
-  fetch(`/get_stock_detail_finnhub?ticker=${encodeURIComponent(ticker)}`)
+  fetch(`/get_stock_detail_finnhub?ticker=${encodeURIComponent(ticker)}&exchange=NAS`)
     .then((r) => r.json())
     .then((data) => {
       if (data.error) {
@@ -89,6 +89,7 @@ window.openStockDetail = function (ticker) {
       }
 
       window.renderFinnhubBasic(content, ticker, data);
+      window.renderAnomalyBox(content, ticker, data.anomaly);
       window.renderValuationBox(content, ticker, data);
       window.renderKisCandleChart(content, ticker);
     })
@@ -103,8 +104,9 @@ window.openStockDetail = function (ticker) {
 window.renderFinnhubBasic = function (root, ticker, data) {
   const price = data.price?.c ?? "N/A";
   const marketCap = data.profile?.marketCapitalization ?? "N/A";
-  const per = data.metrics?.metric?.peTTM ?? "N/A";
-  const dividendYield = (data.metrics?.metric?.currentDividendYieldTTM ?? 0) * 100;
+  const metrics = data.metrics_summary?.items || {};
+  const per = metrics.peTTM ?? "N/A";
+  const dividendYield = (metrics.currentDividendYieldTTM ?? 0) * 100;
 
   root.innerHTML = `
     <h5>${data.profile?.name ?? ""} (${ticker})</h5>
@@ -113,6 +115,106 @@ window.renderFinnhubBasic = function (root, ticker, data) {
     <p><strong>📊 PER:</strong> ${per}</p>
     <p><strong>📤 배당률:</strong> ${Number(dividendYield).toFixed(2)}%</p>
   `;
+};
+
+window.getAnomalyLevelClass = function (level) {
+  switch (level) {
+    case "EXTREME":
+      return "anomaly-extreme";
+    case "HIGH":
+      return "anomaly-high";
+    case "MEDIUM":
+      return "anomaly-medium";
+    case "LOW":
+      return "anomaly-low";
+    default:
+      return "anomaly-unknown";
+  }
+};
+
+window.renderAnomalyBox = function (root, ticker, anomaly) {
+  const box = document.createElement("div");
+  box.className = "anomaly-box";
+
+  if (!anomaly || !anomaly.ok) {
+    box.innerHTML = `
+      <h5>이상 징후 탐지</h5>
+      <p class="muted">이상 징후 데이터를 계산하지 못했습니다.</p>
+      <p class="muted">${window.escapeHtml ? window.escapeHtml(anomaly?.error || "") : (anomaly?.error || "")}</p>
+    `;
+    root.appendChild(box);
+    return;
+  }
+
+  const f = anomaly.features || {};
+  const reasons = Array.isArray(anomaly.reasons) ? anomaly.reasons : [];
+  const levelClass = window.getAnomalyLevelClass(anomaly.level);
+
+  const fmtNum = (value, digits = 2) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "N/A";
+    return n.toFixed(digits);
+  };
+
+  const fmtPct = (value, digits = 2) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "N/A";
+    return `${n >= 0 ? "+" : ""}${n.toFixed(digits)}%`;
+  };
+
+  const safeText = (value) => {
+    const s = String(value ?? "");
+    return s
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  };
+
+  box.innerHTML = `
+    <hr>
+    <h5>이상 징후 탐지</h5>
+
+    <div class="anomaly-header">
+      <span class="anomaly-badge ${levelClass}">${anomaly.level}</span>
+      <span class="anomaly-score">score: ${anomaly.score}</span>
+      <span class="anomaly-date">${anomaly.last_date || ""}</span>
+    </div>
+
+    <div class="anomaly-grid">
+      <div>
+        <span class="label">최근 수익률</span>
+        <strong>${fmtPct(f.last_return_pct)}</strong>
+      </div>
+      <div>
+        <span class="label">수익률 z-score</span>
+        <strong>${fmtNum(f.return_z)}</strong>
+      </div>
+      <div>
+        <span class="label">변동성 비율</span>
+        <strong>${fmtNum(f.vol_ratio)}x</strong>
+      </div>
+      <div>
+        <span class="label">MA20 이격</span>
+        <strong>${fmtPct(f.ma20_gap_pct)}</strong>
+      </div>
+      <div>
+        <span class="label">RSI</span>
+        <strong>${fmtNum(f.rsi)}</strong>
+      </div>
+      <div>
+        <span class="label">고저폭 비율</span>
+        <strong>${fmtNum(f.range_ratio)}x</strong>
+      </div>
+    </div>
+
+    <ul class="anomaly-reasons">
+      ${reasons.map((r) => `<li>${safeText(r)}</li>`).join("")}
+    </ul>
+  `;
+
+  root.appendChild(box);
 };
 
 window.renderValuationBox = function (root, ticker, finnhubData) {

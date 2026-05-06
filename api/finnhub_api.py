@@ -40,7 +40,11 @@ def safe_request(path: str, params: Dict[str, Any], timeout: int = 6, retries: i
             wait = min(0.7 * (2 ** attempt), 3.0)
             time.sleep(wait)
 
-    return {"error": f"request failed: {url} ({last_err})"}
+    return {
+        "error": "request failed",
+        "path": path,
+        "reason": last_err,
+    }
 
 # ---- 캐시 TTL 가이드 ----
 # quote: 20~30초 / profile: 6시간 / metrics: 2~5분 / target: 10~30분 / etf holdings: 6시간 / news: 10분
