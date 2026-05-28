@@ -72,6 +72,218 @@
       <h5 class="chart-title">Portfolio Total Value & Profit</h5>
       <div class="chart-box" id="profit-chart"></div>
     </div>
+
+    <!-- Performance Attribution -->
+    <div class="chart-card mt-3" id="performance-card">
+      <h5 class="chart-title">성과 원인 분석</h5>
+
+      <div
+              class="market-cards"
+              id="performance-summary"
+              style="grid-template-columns: repeat(3, minmax(140px, 1fr));"
+      ></div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-lg-6">
+          <h6 style="margin-bottom:8px;">수익 기여 상위</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>종목</th>
+                <th>자산군</th>
+                <th>평가손익</th>
+                <th>손익률</th>
+                <th>비중</th>
+              </tr>
+              </thead>
+              <tbody id="performance-gainers-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <h6 style="margin-bottom:8px;">손실 기여 상위</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>종목</th>
+                <th>자산군</th>
+                <th>평가손익</th>
+                <th>손익률</th>
+                <th>비중</th>
+              </tr>
+              </thead>
+              <tbody id="performance-losers-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-lg-6">
+          <h6 style="margin-bottom:8px;">자산군별 성과</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>자산군</th>
+                <th>종목수</th>
+                <th>평가금액</th>
+                <th>비중</th>
+                <th>평가손익</th>
+                <th>손익률</th>
+              </tr>
+              </thead>
+              <tbody id="performance-assets-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <h6 style="margin-bottom:8px;">월별 계좌 변화</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>월</th>
+                <th>월말 평가총액</th>
+                <th>변화금액</th>
+                <th>변화율</th>
+              </tr>
+              </thead>
+              <tbody id="performance-monthly-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk Exposure -->
+    <div class="chart-card mt-3" id="risk-card">
+      <h5 class="chart-title">리스크와 노출 분석</h5>
+
+      <div
+              class="market-cards"
+              id="risk-summary"
+              style="grid-template-columns: repeat(3, minmax(140px, 1fr));"
+      ></div>
+
+      <div class="mt-3" style="overflow:auto;">
+        <h6 style="margin-bottom:8px;">리스크 신호</h6>
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>수준</th>
+            <th>항목</th>
+            <th>설명</th>
+          </tr>
+          </thead>
+          <tbody id="risk-alerts-body"></tbody>
+        </table>
+      </div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-lg-6">
+          <h6 style="margin-bottom:8px;">상위 포지션</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>종목</th>
+                <th>자산군</th>
+                <th>평가금액</th>
+                <th>비중</th>
+                <th>손익률</th>
+              </tr>
+              </thead>
+              <tbody id="risk-top-positions-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <h6 style="margin-bottom:8px;">통화 노출</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>통화</th>
+                <th>항목수</th>
+                <th>평가금액</th>
+                <th>비중</th>
+              </tr>
+              </thead>
+              <tbody id="risk-currency-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3" style="overflow:auto;">
+        <h6 style="margin-bottom:8px;">자산군 노출</h6>
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>자산군</th>
+            <th>항목수</th>
+            <th>평가금액</th>
+            <th>비중</th>
+          </tr>
+          </thead>
+          <tbody id="risk-asset-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Account Signals -->
+    <div class="chart-card mt-3" id="signals-card">
+      <h5 class="chart-title">예측과 이상징후</h5>
+
+      <div
+              class="market-cards"
+              id="signals-summary"
+              style="grid-template-columns: repeat(3, minmax(140px, 1fr));"
+      ></div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-lg-5">
+          <h6 style="margin-bottom:8px;">최근 추세</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>구간</th>
+                <th>변화금액</th>
+                <th>변화율</th>
+              </tr>
+              </thead>
+              <tbody id="signals-trends-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <h6 style="margin-bottom:8px;">평소 범위를 벗어난 변동일</h6>
+          <div style="overflow:auto;">
+            <table class="table table-bordered table-sm">
+              <thead>
+              <tr>
+                <th>날짜</th>
+                <th>신호</th>
+                <th>변화금액</th>
+                <th>변화율</th>
+                <th>z-score</th>
+              </tr>
+              </thead>
+              <tbody id="signals-moves-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="chart-card mt-3">
   <h5 class="chart-title">계좌 총자산 추이 + 예측</h5>
 
@@ -175,6 +387,34 @@
         <div style="font-size:12px; opacity:0.75;">
           ※ 실현손익은 “수량 감소”를 매도로 보고, “직전 스냅샷 평가단가”를 매도가로 가정한 추정치입니다.
         </div>
+      </div>
+    </div>
+
+    <!-- Investment Timeline -->
+    <div class="chart-card mt-3" id="timeline-card">
+      <h5 class="chart-title">투자 이벤트 타임라인</h5>
+
+      <div
+              class="market-cards"
+              id="timeline-summary"
+              style="grid-template-columns: repeat(3, minmax(140px, 1fr));"
+      ></div>
+
+      <div class="mt-3" style="overflow:auto;">
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>날짜</th>
+            <th>이벤트</th>
+            <th>종목</th>
+            <th>자산군</th>
+            <th>수량 변화</th>
+            <th>매입금액 변화</th>
+            <th>추정 실현손익</th>
+          </tr>
+          </thead>
+          <tbody id="timeline-events-body"></tbody>
+        </table>
       </div>
     </div>
 
@@ -405,6 +645,10 @@
 <script defer src="{{ url_for('static', filename='js/market.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/watchlist.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/pnl.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/timeline.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/performance.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/risk.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/signals.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/fx_forecast_chart.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/account_forecast_chart.js') }}"></script>

@@ -6,8 +6,8 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from db.connection import get_connection
 from extensions import cache
+from services.analysis_utils import load_account_values
 from services.forecast_core import (
     ACCOUNT_VALUE_CSV,
     DEFAULT_BACKTEST_DAYS,
@@ -24,31 +24,21 @@ from services.forecast_core import (
 )
 
 
+def _get_connection():
+    from db.connection import get_connection
+
+    return get_connection()
+
+
 @cache.memoize(timeout=60 * 10)
 def load_account_value_series(csv_path: Optional[str] = None) -> pd.Series:
-    path = Path(csv_path) if csv_path else ACCOUNT_VALUE_CSV
-
-    if not path.exists():
-        raise RuntimeError(f"account value csv not found: {path}")
-
-    df = pd.read_csv(path, encoding="utf-8-sig")
+    path = Path(csv_path) if csv_path else None
+    df = load_account_values(path)
     if df.empty:
+        source = path or ACCOUNT_VALUE_CSV
+        if not Path(source).exists():
+            raise RuntimeError(f"account value csv not found: {source}")
         raise RuntimeError("account value csv is empty")
-
-    required_cols = {"date", "total_value"}
-    missing = required_cols - set(df.columns)
-    if missing:
-        raise RuntimeError(f"missing columns in account value csv: {sorted(missing)}")
-
-    df = df.copy()
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df["total_value"] = pd.to_numeric(df["total_value"], errors="coerce")
-
-    df = df.dropna(subset=["date", "total_value"])
-    df = df.sort_values("date").drop_duplicates(subset=["date"], keep="last")
-
-    if df.empty:
-        raise RuntimeError("account value csv has no valid rows after cleaning")
 
     series = pd.Series(df["total_value"].values, index=df["date"])
     series = _clean_series(series)
@@ -244,7 +234,7 @@ def save_account_value_forecast_snapshot(
     skipped = 0
 
     try:
-        conn = get_connection()
+        conn = _get_connection()
         cur = conn.cursor()
 
         sql = """
@@ -301,7 +291,7 @@ def update_account_forecast_actuals(csv_path: Optional[str] = None) -> Dict:
     updated = 0
 
     try:
-        conn = get_connection()
+        conn = _get_connection()
         cur = conn.cursor()
 
         cur.execute("""
@@ -356,7 +346,7 @@ def get_account_forecast_history(
     cur = None
 
     try:
-        conn = get_connection()
+        conn = _get_connection()
         cur = conn.cursor()
 
         sql = """

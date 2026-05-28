@@ -1,19 +1,26 @@
 window.initApp = function () {
-  window.loadPortfolioTable();
-  window.loadPieChart();
-  window.loadAccountChart();
+  [
+    "loadPortfolioTable",
+    "loadPieChart",
+    "loadAccountChart",
+    "loadWatchlist",
+    "setupWatchlistForm",
+    "setupPrivacyToggle",
+    "loadMarketCards",
+    "loadPnlPanel",
+    "loadTimelinePanel",
+    "loadPerformancePanel",
+    "loadRiskPanel",
+    "loadSignalsPanel",
+  ].forEach((name) => {
+    if (typeof window[name] === "function") {
+      window[name]();
+    }
+  });
 
-  window.loadWatchlist();
-  window.setupWatchlistForm();
-
-  window.setupPrivacyToggle();
-
-  window.loadMarketCards();
-  if (!window.AppState.intervals.marketCards) {
+  if (typeof window.loadMarketCards === "function" && !window.AppState.intervals.marketCards) {
     window.AppState.intervals.marketCards = setInterval(window.loadMarketCards, 60_000);
   }
-
-  window.loadPnlPanel();
 };
 
 window.showTab = function (tabId) {

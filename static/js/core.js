@@ -45,6 +45,15 @@ window.toLocaleNum = function (x, digits = 0) {
   return n.toLocaleString(undefined, { maximumFractionDigits: digits });
 };
 
+window.escapeHTML = function (value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+};
+
 window.loadJsonAndRender = function (url, onSuccess, onError) {
   window
     .fetchJsonCached(url, 15000)

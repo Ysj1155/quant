@@ -1,142 +1,112 @@
-# routes/portfolio.py
 from flask import Blueprint, jsonify, request
-from extensions import cache
 
-# 기존 portfolio 관련 DB/섹터 기능이 이미 프로젝트에 있다면 그대로 사용
-from utils import get_connection
 from domain.sector import (
-    normalize_symbol, is_etf, get_etf_sector_weights,
-    get_sector_for_symbol, add_to_bucket
+    add_to_bucket,
+    get_etf_sector_weights,
+    get_sector_for_symbol,
+    is_etf,
+    normalize_symbol,
 )
-
+from extensions import cache
+from services.dashboard_data import load_account_value_rows, load_current_portfolio_rows
+from services.performance import build_performance_summary
 from services.portfolio import build_pnl_from_snapshots, build_pnl_series, build_pnl_timeseries
+from services.risk import build_risk_summary
+from services.signals import build_account_signals
 from services.snapshots import list_snapshot_dates, load_snapshot
+from services.timeline import build_investment_timeline
 
 portfolio_bp = Blueprint("portfolio", __name__)
 
-# -----------------------------
-# (A) 기존: 포트폴리오/자산 그래프 API
-# -----------------------------
+
 @portfolio_bp.route("/get_portfolio_data")
 @cache.cached(timeout=30)
 def get_portfolio_data():
     try:
-        conn = get_connection()
-        with conn.cursor(dictionary=True) as cur:
-            cur.execute("""
-                SELECT account_number, ticker, quantity,
-                       purchase_amount, evaluation_amount,
-                       profit_loss, profit_rate, evaluation_ratio
-                FROM portfolio
-            """)
-            rows = cur.fetchall()
-        conn.close()
-        return jsonify(rows)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify(load_current_portfolio_rows())
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @portfolio_bp.route("/get_pie_chart_data")
 @cache.cached(timeout=30)
 def get_pie_chart_data():
     try:
-        conn = get_connection()
-        with conn.cursor(dictionary=True) as cur:
-            cur.execute("SELECT ticker, evaluation_amount FROM portfolio")
-            rows = cur.fetchall()
-        conn.close()
-
+        rows = load_current_portfolio_rows()
         if not rows:
             return jsonify({"labels": [], "values": [], "total_value": "0 KRW"})
 
         tickers = [row["ticker"] for row in rows]
         amounts = [row["evaluation_amount"] for row in rows]
         total = sum(amounts)
-        values = [(amt / total) * 100 if total else 0 for amt in amounts]
+        values = [(amount / total) * 100 if total else 0 for amount in amounts]
 
         return jsonify({
             "labels": tickers,
             "values": values,
-            "total_value": f"{int(total):,} KRW"
+            "total_value": f"{int(total):,} KRW",
         })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @portfolio_bp.route("/get_account_value_data")
 @cache.cached(timeout=60)
 def get_account_value_data():
-    conn = None
     try:
-        conn = get_connection()
-        with conn.cursor(dictionary=True) as cur:
-            cur.execute("SELECT date, total_value FROM account_value ORDER BY date ASC")
-            rows = cur.fetchall()
-
-        if not rows:
+        df = load_account_value_rows()
+        if df.empty:
             return jsonify({"error": "No account value data found"}), 500
 
-        dates = [str(row["date"]) for row in rows]
-        values = [row["total_value"] for row in rows]
+        dates = df["date"].dt.strftime("%Y-%m-%d").tolist()
+        values = df["total_value"].astype(float).tolist()
         base = values[0]
-        profits = [0 for _ in values] if base == 0 else [((v - base) / base) * 100 for v in values]
+        profits = [0 for _ in values] if base == 0 else [((value - base) / base) * 100 for value in values]
 
         return jsonify({
             "dates": dates,
             "total_values": values,
             "profits": profits,
             "latest_value": values[-1],
-            "latest_profit": profits[-1]
+            "latest_profit": profits[-1],
         })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @portfolio_bp.route("/get_portfolio_sector_data")
 @cache.cached(timeout=60 * 10)
 def get_portfolio_sector_data():
-    """개별주식+ETF를 섹터 기준 look-through."""
+    """Build sector exposure from current stock and ETF holdings."""
     try:
-        conn = get_connection()
-        with conn.cursor(dictionary=True) as cur:
-            cur.execute("SELECT ticker, evaluation_amount FROM portfolio")
-            rows = cur.fetchall()
-        conn.close()
-
+        rows = load_current_portfolio_rows()
         if not rows:
             return jsonify({})
 
         bucket = {}
-        for r in rows:
-            raw = r["ticker"]
-            eval_amt = float(r["evaluation_amount"] or 0)
-
-            sym = normalize_symbol(raw)
-            if not sym:
+        for row in rows:
+            raw = row["ticker"]
+            eval_amount = float(row["evaluation_amount"] or 0)
+            symbol = normalize_symbol(raw)
+            if not symbol:
                 continue
 
-            if is_etf(sym):
-                weights = get_etf_sector_weights(sym)
+            if is_etf(symbol):
+                weights = get_etf_sector_weights(symbol)
                 if weights:
-                    for sector, w in weights.items():
-                        add_to_bucket(bucket, sector, sym, eval_amt * w)
+                    for sector, weight in weights.items():
+                        add_to_bucket(bucket, sector, symbol, eval_amount * weight)
                 else:
-                    add_to_bucket(bucket, "Unknown", sym, eval_amt)
+                    add_to_bucket(bucket, "Unknown", symbol, eval_amount)
             else:
-                sector = get_sector_for_symbol(sym)
-                add_to_bucket(bucket, sector, sym, eval_amt)
+                sector = get_sector_for_symbol(symbol)
+                add_to_bucket(bucket, sector, symbol, eval_amount)
 
         return jsonify(bucket)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
-# -----------------------------
-# (B) 기존: PnL API (routes/pnl.py 흡수)
-# -----------------------------
 @portfolio_bp.route("/api/pnl")
 @cache.cached(timeout=60, query_string=True)
 def api_pnl():
@@ -156,9 +126,10 @@ def api_pnl_events():
     date = (request.args.get("date") or "").strip()
     events = data.get("events", [])
     if date:
-        events = [e for e in events if e.get("date") == date]
+        events = [event for event in events if event.get("date") == date]
 
     return jsonify({"ok": True, "events": events})
+
 
 @portfolio_bp.route("/api/pnl/series")
 @cache.cached(timeout=60)
@@ -168,9 +139,46 @@ def api_pnl_series():
     return jsonify(data), status
 
 
-# -----------------------------
-# (C) 기존: Snapshots API (routes/snapshots.py 흡수)
-# -----------------------------
+@portfolio_bp.route("/api/timeline/events")
+@cache.cached(timeout=60, query_string=True)
+def api_timeline_events():
+    limit = int(request.args.get("limit", 100))
+    include_initial = (request.args.get("include_initial") or "").lower() in ("1", "true", "yes", "y")
+    full_scan = (request.args.get("full") or "1").lower() in ("1", "true", "yes", "y")
+    date = (request.args.get("date") or "").strip() or None
+    event_type = (request.args.get("event_type") or "").strip() or None
+
+    data = build_investment_timeline(
+        limit=limit,
+        include_initial=include_initial,
+        date=date,
+        event_type=event_type,
+        full_scan=full_scan,
+    )
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/performance/summary")
+@cache.cached(timeout=60)
+def api_performance_summary():
+    data = build_performance_summary()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/risk/summary")
+@cache.cached(timeout=60)
+def api_risk_summary():
+    data = build_risk_summary()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/signals/account")
+@cache.cached(timeout=60)
+def api_account_signals():
+    data = build_account_signals()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
 @portfolio_bp.route("/api/snapshots/dates")
 @cache.cached(timeout=60 * 5)
 def snapshot_dates():
