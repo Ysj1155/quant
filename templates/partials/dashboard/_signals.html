@@ -1,0 +1,50 @@
+<div class="section-heading">
+  <div>
+    <p class="eyebrow">Signals</p>
+    <h2>이상징후</h2>
+  </div>
+</div>
+
+<section class="panel" id="signals-card">
+  <div class="panel-heading">
+    <h3>계좌 이상징후</h3>
+    <span>최근 계좌 변동이 평소 흐름과 얼마나 다른지 봅니다.</span>
+  </div>
+  <div class="metric-grid" id="signals-summary"></div>
+
+  <div class="layout-two layout-narrow-left">
+    <div>
+      <h4 class="table-title">최근 추세</h4>
+      <div class="table-scroll">
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>구간</th>
+            <th>변화금액</th>
+            <th>변화율</th>
+          </tr>
+          </thead>
+          <tbody id="signals-trends-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h4 class="table-title">평소 범위를 벗어난 변동일</h4>
+      <div class="table-scroll">
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>날짜</th>
+            <th>신호</th>
+            <th>변화금액</th>
+            <th>변화율</th>
+            <th>z-score</th>
+          </tr>
+          </thead>
+          <tbody id="signals-moves-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

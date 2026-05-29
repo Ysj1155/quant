@@ -1,0 +1,48 @@
+<div class="section-heading">
+  <div>
+    <p class="eyebrow">Overview</p>
+    <h2>계좌 개요</h2>
+  </div>
+  <button class="btn btn-secondary btn-sm" id="toggle-privacy-btn">정보 숨기기</button>
+</div>
+
+<div class="layout-two layout-wide-left">
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>총자산 추이</h3>
+      <span>클릭한 날짜의 상세 내역을 아래에서 확인합니다.</span>
+    </div>
+    <div class="chart-box chart-box-large" id="profit-chart"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>종목별 비중</h3>
+      <span>예수금은 표와 비중에서 제외합니다.</span>
+    </div>
+    <div class="chart-box chart-box-compact" id="pie-chart"></div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-heading">
+    <h3>보유 종목</h3>
+    <span>현재 스냅샷 기준 포지션입니다.</span>
+  </div>
+  <div class="table-scroll">
+    <table class="table table-bordered table-sm align-middle privacy-sensitive">
+      <thead>
+      <tr>
+        <th>계좌번호</th>
+        <th>종목</th>
+        <th>수량</th>
+        <th>매입금액</th>
+        <th>평가금액</th>
+        <th>평가손익</th>
+        <th>손익률</th>
+      </tr>
+      </thead>
+      <tbody id="portfolio-table-body"></tbody>
+    </table>
+  </div>
+</section>

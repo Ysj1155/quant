@@ -1,0 +1,83 @@
+<div class="section-heading">
+  <div>
+    <p class="eyebrow">Details</p>
+    <h2>선택 날짜 상세</h2>
+  </div>
+</div>
+
+<div class="layout-two">
+  <section class="panel" id="snapshot-card">
+    <div class="panel-heading">
+      <h3>날짜별 스냅샷</h3>
+      <span id="snapshot-meta">총자산 차트에서 날짜를 클릭하면 표시됩니다.</span>
+    </div>
+    <div class="metric-grid compact-grid" id="snapshot-summary"></div>
+
+    <h4 class="table-title">보유 종목</h4>
+    <div class="table-scroll">
+      <table class="table table-bordered table-sm">
+        <thead>
+        <tr>
+          <th>종목명</th>
+          <th>통화</th>
+          <th>수량</th>
+          <th>매입금액</th>
+          <th>평가금액</th>
+          <th>평가손익</th>
+          <th>손익률</th>
+          <th>비중</th>
+        </tr>
+        </thead>
+        <tbody id="snapshot-table-body"></tbody>
+      </table>
+    </div>
+
+    <h4 class="table-title">현금성 자산</h4>
+    <div class="cash-box" id="snapshot-cash"></div>
+  </section>
+
+  <section class="panel" id="pnl-detail-card">
+    <div class="panel-heading">
+      <h3>날짜별 손익 상세</h3>
+      <span>선택 날짜 기준의 미실현/실현 추정 내역입니다.</span>
+    </div>
+    <div class="metric-grid compact-grid" id="pnl-summary"></div>
+
+    <h4 class="table-title">미실현 보유중</h4>
+    <div class="table-scroll">
+      <table class="table table-bordered table-sm">
+        <thead>
+        <tr>
+          <th>종목명</th>
+          <th>계좌</th>
+          <th>매수일</th>
+          <th>수량</th>
+          <th>매입금액</th>
+          <th>평가금액</th>
+          <th>평가손익</th>
+          <th>손익률</th>
+        </tr>
+        </thead>
+        <tbody id="open-pnl-body"></tbody>
+      </table>
+    </div>
+
+    <h4 class="table-title">실현 추정</h4>
+    <div class="table-scroll">
+      <table class="table table-bordered table-sm">
+        <thead>
+        <tr>
+          <th>종목명</th>
+          <th>계좌</th>
+          <th>매수일</th>
+          <th>매도확인일</th>
+          <th>마지막 보유일</th>
+          <th>실현손익</th>
+          <th>실현손익률</th>
+        </tr>
+        </thead>
+        <tbody id="realized-pnl-body"></tbody>
+      </table>
+    </div>
+  </section>
+</div>

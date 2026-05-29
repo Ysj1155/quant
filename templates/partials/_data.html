@@ -1,0 +1,82 @@
+<section class="tab-content" id="data" role="tabpanel" style="display:none;">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Market Context</p>
+      <h2>시장과 예측 자료</h2>
+    </div>
+  </div>
+
+  <div class="layout-two">
+    <section class="panel">
+      <div class="panel-heading">
+        <h3>S&P 500 섹터별 변동률</h3>
+        <span>외부 시장 흐름을 참고합니다.</span>
+      </div>
+      <div class="chart-box square-plot" id="sp500-treemap"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <h3>내 포트폴리오 섹터 분포</h3>
+        <span>ETF는 가능한 경우 섹터 기준으로 나눕니다.</span>
+      </div>
+      <div class="chart-box square-plot" id="portfolio-treemap"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h3>USD/KRW 환율 추이와 예측</h3>
+      <span>달러 노출을 해석하기 위한 보조 지표입니다.</span>
+    </div>
+
+    <div class="control-row">
+      <div>
+        <label class="form-label mb-1" for="fx-horizon">예측 일수</label>
+        <select class="form-select form-select-sm" id="fx-horizon">
+          <option value="5">5일</option>
+          <option selected value="7">7일</option>
+          <option value="14">14일</option>
+          <option value="21">21일</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label mb-1" for="fx-backtest-days">평가 구간</label>
+        <select class="form-select form-select-sm" id="fx-backtest-days">
+          <option value="20">20일</option>
+          <option selected value="30">30일</option>
+          <option value="60">60일</option>
+          <option value="90">90일</option>
+        </select>
+      </div>
+
+      <fieldset class="model-group">
+        <legend>모델 선택</legend>
+        <label><input checked class="form-check-input fx-model-check" id="fx-model-linear" type="checkbox" value="linear"> Linear</label>
+        <label><input checked class="form-check-input fx-model-check" id="fx-model-holt" type="checkbox" value="holt"> Holt</label>
+        <label><input checked class="form-check-input fx-model-check" id="fx-model-arima" type="checkbox" value="arima"> ARIMA</label>
+      </fieldset>
+
+      <div class="button-row">
+        <button class="btn btn-primary btn-sm" id="fx-refresh-btn">다시 그리기</button>
+        <button class="btn btn-success btn-sm" id="fx-save-btn">예측 저장</button>
+        <button class="btn btn-warning btn-sm" id="fx-update-actuals-btn">실제값 반영</button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <div id="fx-save-status"></div>
+      <div id="fx-actuals-status"></div>
+    </div>
+
+    <div class="chart-box" id="exchange-rate-chart"></div>
+    <div class="metrics-table" id="fx-forecast-metrics"></div>
+
+    <div class="table-section-header">
+      <h4 class="table-title">환율 예측 이력</h4>
+      <button class="btn btn-outline-secondary btn-sm" id="fx-history-refresh-btn">이력 새로고침</button>
+    </div>
+    <div id="fx-history-table"></div>
+  </section>
+</section>

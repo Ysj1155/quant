@@ -1,0 +1,60 @@
+<div class="section-heading">
+  <div>
+    <p class="eyebrow">Timeline</p>
+    <h2>흐름과 이벤트</h2>
+  </div>
+</div>
+
+<section class="panel" id="pnl-overview-card">
+  <div class="panel-heading">
+    <h3>실현/미실현 손익</h3>
+    <span>스냅샷 변화로 추정한 손익 흐름입니다.</span>
+  </div>
+  <div class="chart-box" id="pnl-chart"></div>
+
+  <h4 class="table-title">추정 매도 이벤트</h4>
+  <div class="table-scroll">
+    <table class="table table-bordered table-sm">
+      <thead>
+      <tr>
+        <th>날짜</th>
+        <th>종목</th>
+        <th>구분</th>
+        <th>매도수량</th>
+        <th>추정 실현손익</th>
+      </tr>
+      </thead>
+      <tbody id="pnl-events-body"></tbody>
+    </table>
+  </div>
+  <p class="note">실현손익은 수량 감소를 매도로 보고, 직전 스냅샷 평가손익을 기준으로 추정한 값입니다.</p>
+</section>
+
+<section class="panel" id="timeline-card">
+  <div class="panel-heading">
+    <h3>투자 이벤트 원장</h3>
+    <span>신규 진입, 추가 매수, 일부 매도, 전량 매도를 스냅샷 변화 기준으로 복기합니다.</span>
+  </div>
+  <div class="metric-grid" id="timeline-summary"></div>
+
+  <div class="table-scroll">
+    <table class="table table-bordered table-sm">
+      <thead>
+      <tr>
+        <th>날짜</th>
+        <th>이벤트</th>
+        <th>종목</th>
+        <th>자산군</th>
+        <th>수량 변화</th>
+        <th>보유 수량</th>
+        <th>추정 단가</th>
+        <th>추정 현금흐름</th>
+        <th>추정 실현손익</th>
+        <th>근거</th>
+      </tr>
+      </thead>
+      <tbody id="timeline-events-body"></tbody>
+    </table>
+  </div>
+  <p class="note">매수 금액은 매입금액 증가분, 매도 금액은 직전 평가금액 기준 추정치입니다. 실제 체결가/수수료와는 차이가 날 수 있습니다.</p>
+</section>

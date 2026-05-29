@@ -8,10 +8,13 @@ from domain.sector import (
     normalize_symbol,
 )
 from extensions import cache
+from services.data_quality import build_data_quality_summary
 from services.dashboard_data import load_account_value_rows, load_current_portfolio_rows
+from services.kr_security_master import get_kr_security_master_summary, refresh_kr_security_master
 from services.performance import build_performance_summary
 from services.portfolio import build_pnl_from_snapshots, build_pnl_series, build_pnl_timeseries
 from services.risk import build_risk_summary
+from services.security_resolver import build_security_resolution_summary
 from services.signals import build_account_signals
 from services.snapshots import list_snapshot_dates, load_snapshot
 from services.timeline import build_investment_timeline
@@ -177,6 +180,36 @@ def api_risk_summary():
 def api_account_signals():
     data = build_account_signals()
     return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/data-quality/summary")
+@cache.cached(timeout=60)
+def api_data_quality_summary():
+    data = build_data_quality_summary()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/data-quality/security-resolution")
+@cache.cached(timeout=60)
+def api_security_resolution():
+    data = build_security_resolution_summary()
+    return jsonify({"ok": True, "security_resolution": data})
+
+
+@portfolio_bp.route("/api/data-quality/kr-security-master")
+@cache.cached(timeout=60)
+def api_kr_security_master():
+    return jsonify({"ok": True, "kr_security_master": get_kr_security_master_summary()})
+
+
+@portfolio_bp.route("/api/data-quality/kr-security-master/refresh", methods=["POST"])
+def api_refresh_kr_security_master():
+    try:
+        data = refresh_kr_security_master()
+        cache.clear()
+        return jsonify({"ok": True, "kr_security_master": data})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
 
 
 @portfolio_bp.route("/api/snapshots/dates")

@@ -40,7 +40,7 @@ def currency_label(value: object) -> str:
     raw = str(value or "").strip()
     if raw.upper() == "USD":
         return "USD"
-    if raw in ("", "KRW", "\uc6d0\ud654", "\uc608\uc218\uae08"):
+    if raw in ("", "KRW", "\uc6d0\ud654", "\ud604\uae08", "\uc608\uc218\uae08"):
         return "KRW"
     return raw
 

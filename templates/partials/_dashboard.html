@@ -1,0 +1,44 @@
+<section class="tab-content" id="dashboard" role="tabpanel">
+  <nav class="dashboard-subtabs" aria-label="account review sections">
+    <button class="dashboard-subtab active" id="dashboard-subtab-overview" onclick="showDashboardSection('overview')" type="button">개요</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-quality" onclick="showDashboardSection('quality')" type="button">데이터 품질</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-performance" onclick="showDashboardSection('performance')" type="button">성과</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-risk" onclick="showDashboardSection('risk')" type="button">리스크</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-signals" onclick="showDashboardSection('signals')" type="button">이상징후</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-timeline" onclick="showDashboardSection('timeline')" type="button">이벤트</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-details" onclick="showDashboardSection('details')" type="button">날짜 상세</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-forecast" onclick="showDashboardSection('forecast')" type="button">예측 검토</button>
+  </nav>
+
+  <section class="dashboard-section active" id="dashboard-section-overview">
+    {% include "partials/dashboard/_overview.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-quality">
+    {% include "partials/dashboard/_data_quality.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-performance">
+    {% include "partials/dashboard/_performance.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-risk">
+    {% include "partials/dashboard/_risk.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-signals">
+    {% include "partials/dashboard/_signals.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-timeline">
+    {% include "partials/dashboard/_timeline.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-details">
+    {% include "partials/dashboard/_details.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-forecast">
+    {% include "partials/dashboard/_account_forecast.html" %}
+  </section>
+</section>

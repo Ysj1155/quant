@@ -1,0 +1,51 @@
+<div class="section-heading">
+  <div>
+    <p class="eyebrow">Data Quality</p>
+    <h2>데이터 품질 센터</h2>
+  </div>
+</div>
+
+<section class="panel" id="data-quality-card">
+  <div class="panel-heading">
+    <h3>스냅샷 신뢰도 점검</h3>
+    <span>분석 결과를 믿기 전에 원본 CSV와 파생 데이터가 일관적인지 확인합니다.</span>
+    <button class="btn btn-outline-secondary btn-sm" onclick="refreshKrSecurityMaster(this)" type="button">
+      국내 종목 사전 갱신
+    </button>
+  </div>
+
+  <div class="metric-grid" id="data-quality-summary"></div>
+
+  <h4 class="table-title">외부 가격 검산 준비도</h4>
+  <div class="metric-grid compact-grid" id="security-resolution-summary"></div>
+  <div class="table-scroll">
+    <table class="table table-bordered table-sm">
+      <thead>
+      <tr>
+        <th>상태</th>
+        <th>종목</th>
+        <th>분류</th>
+        <th>심볼</th>
+        <th>출처</th>
+        <th>메모</th>
+      </tr>
+      </thead>
+      <tbody id="security-resolution-body"></tbody>
+    </table>
+  </div>
+
+  <h4 class="table-title">검사 결과</h4>
+  <div class="table-scroll">
+    <table class="table table-bordered table-sm">
+      <thead>
+      <tr>
+        <th>상태</th>
+        <th>검사 항목</th>
+        <th>설명</th>
+        <th>세부</th>
+      </tr>
+      </thead>
+      <tbody id="data-quality-checks-body"></tbody>
+    </table>
+  </div>
+</section>

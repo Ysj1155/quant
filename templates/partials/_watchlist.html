@@ -1,0 +1,27 @@
+<section class="tab-content" id="watchlist" role="tabpanel" style="display:none;">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Research Notes</p>
+      <h2>관심목록</h2>
+    </div>
+  </div>
+
+  <form class="watchlist-form" id="watchlist-form">
+    <label class="visually-hidden" for="ticker">티커</label>
+    <input class="form-control" id="ticker" placeholder="티커 입력" required type="text" />
+    <button class="btn btn-primary" type="submit">추가</button>
+  </form>
+
+  <div class="watchlist-layout">
+    <aside>
+      <ul class="list-group" id="watchlist-items"></ul>
+    </aside>
+    <section class="panel" id="stock-detail-panel" style="display:none;">
+      <div class="panel-heading">
+        <h3 id="detail-title">종목 분석</h3>
+        <span>관심 종목을 선택하면 참고용 데이터가 표시됩니다.</span>
+      </div>
+      <div id="detail-content"></div>
+    </section>
+  </div>
+</section>

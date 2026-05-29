@@ -7,6 +7,7 @@ window.initApp = function () {
     "setupWatchlistForm",
     "setupPrivacyToggle",
     "loadMarketCards",
+    "loadDataQualityPanel",
     "loadPnlPanel",
     "loadTimelinePanel",
     "loadPerformancePanel",
@@ -58,12 +59,47 @@ window.showTab = function (tabId) {
   }
 };
 
-window.addEventListener("resize", () => {
-  ["sp500-treemap", "portfolio-treemap", "exchange-rate-chart", "profit-chart", "pie-chart", "pnl-chart"].forEach(
-    (id) => {
+window.showDashboardSection = function (sectionId) {
+  document.querySelectorAll(".dashboard-section").forEach((section) => {
+    section.classList.remove("active");
+  });
+
+  document.querySelectorAll(".dashboard-subtab").forEach((button) => {
+    button.classList.remove("active");
+  });
+
+  const target = window.$(`dashboard-section-${sectionId}`);
+  if (target) target.classList.add("active");
+
+  const button = window.$(`dashboard-subtab-${sectionId}`);
+  if (button) button.classList.add("active");
+
+  const chartIdsBySection = {
+    overview: ["profit-chart", "pie-chart"],
+    timeline: ["pnl-chart"],
+    forecast: ["account-forecast-chart"],
+  };
+
+  setTimeout(() => {
+    (chartIdsBySection[sectionId] || []).forEach((id) => {
       window.safePlotlyResize(id);
-    }
-  );
+      window.forceRelayout(id);
+    });
+  }, 0);
+};
+
+window.addEventListener("resize", () => {
+  [
+    "sp500-treemap",
+    "portfolio-treemap",
+    "exchange-rate-chart",
+    "profit-chart",
+    "pie-chart",
+    "pnl-chart",
+    "account-forecast-chart",
+  ].forEach((id) => {
+    window.safePlotlyResize(id);
+  });
 });
 
 document.addEventListener("DOMContentLoaded", () => {

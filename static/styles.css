@@ -1,190 +1,439 @@
-/* =========================
-   Base
-========================= */
 :root {
-  --bg: #f8f9fa;
+  --bg: #f4f6f5;
   --surface: #ffffff;
-  --text: #111;
-  --muted: rgba(0, 0, 0, 0.7);
-  --border: #e5e5e5;
-  --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  --radius-lg: 16px;
-  --radius-md: 12px;
+  --surface-soft: #f8faf9;
+  --text: #17201b;
+  --muted: #63706a;
+  --border: #dfe6e2;
+  --accent: #256f5b;
+  --accent-2: #2f5f98;
+  --danger: #c4382b;
+  --loss: #155bd4;
+  --shadow: 0 10px 24px rgba(23, 32, 27, 0.07);
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background-color: var(--bg);
+  min-width: 320px;
+  margin: 0;
+  background: var(--bg);
   color: var(--text);
-  font-family: Arial, sans-serif;
+  font-family: Arial, "Noto Sans KR", sans-serif;
 }
 
-.container {
-  max-width: 1200px;
+.app-shell {
+  width: min(1440px, calc(100% - 32px));
   margin: 0 auto;
+  padding: 24px 0 48px;
 }
 
-/* =========================
-   Tabs / Panels
-========================= */
-.nav-tabs .nav-link {
-  font-size: 18px;
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  padding: 20px 0 14px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.app-subtitle,
+.panel-heading span,
+.note {
+  color: var(--muted);
+}
+
+.app-subtitle {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
-.tab-content {
-  padding: 20px;
+.account-total {
+  min-width: 260px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: var(--surface);
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* 제목 */
-h1 {
-  text-align: center;
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-/* =========================
-   Chart Cards
-========================= */
-.chart-card {
-  position: relative;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 16px;
   box-shadow: var(--shadow);
-  overflow: hidden; /* Plotly 내부 요소가 튀어나오는 것 방지 */
+  font-size: 15px;
+  text-align: right;
 }
 
-.chart-title {
-  margin: 0 0 8px;
-  font-weight: 600;
-}
-
-/* Plotly 컨테이너는 JS에서 width/height를 잡으므로
-   CSS에서 고정 height를 과하게 주지 않는 쪽이 안전 */
-.chart-box {
-  width: 100%;
-  min-height: 360px; /* 기본 최소 높이만 */
-  display: block;
-  position: relative;
-}
-
-/* Plotly 내부 폭 강제 */
-.chart-card .js-plotly-plot,
-.chart-card .plot-container,
-.chart-card .svg-container {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-/* 모드바가 카드 안쪽에 머물도록 */
-.chart-card .modebar {
-  right: 8px !important;
-}
-
-/* =========================
-   Special Plot Min Heights
-   (필요하면 카드별로 id로 살짝만)
-========================= */
-#profit-chart { min-height: 450px; }
-#pie-chart { min-height: 450px; }
-#sp500-treemap,
-#portfolio-treemap,
-#exchange-rate-chart {
-  min-height: 440px;
-}
-
-/* =========================
-   Portfolio / Forms
-========================= */
-form {
-  margin: 20px auto;
-  width: 100%;
-  max-width: 900px; /* 80% 대신 안정적인 max-width */
-  text-align: left;
-  padding: 10px;
-  background-color: var(--surface);
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-/* 기존 label 정렬 스타일은 bootstrap input-group과 충돌 가능성이 큼
-   input-group 쓰는 폼에서는 label/width 강제하지 않는 게 안전 */
-form label {
-  display: inline-block;
-  margin-right: 10px;
-}
-
-form input, form button {
-  margin-bottom: 10px;
-}
-
-form button {
-  margin: 0 auto;
-}
-
-/* =========================
-   Privacy toggle
-========================= */
-.privacy-sensitive {
-  transition: visibility 0.3s ease;
-}
-
-/* =========================
-   Market Cards (요약 카드)
-   ⚠️ Bootstrap .card와 이름 충돌 방지: .mini-card로 변경 권장
-========================= */
-.market-cards {
+.market-strip,
+.market-cards,
+.metric-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.market-strip {
+  margin: 8px 0 16px;
+}
+
+.metric-grid {
+  margin: 12px 0 18px;
+}
+
+.compact-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .mini-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  min-height: 86px;
   padding: 12px;
-  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
 }
 
 .mini-card-title {
-  font-size: 13px;
-  opacity: 0.8;
+  min-height: 18px;
   margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .mini-card-value {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.25;
 }
 
 .mini-card-sub {
   margin-top: 4px;
+  color: var(--muted);
   font-size: 12px;
-  opacity: 0.75;
+  line-height: 1.35;
 }
 
-@media (max-width: 900px) {
-  .market-cards {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-  }
+.section-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 16px;
+  border-bottom: 1px solid var(--border);
 }
 
-/* =========================
-   딥러닝용 지표
-========================= */
-.regime-card {
-  min-width: 220px;
+.section-tabs .nav-link {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.section-tabs .nav-link.active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.tab-content {
+  display: block;
+}
+
+.dashboard-subtabs {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 18px;
+  padding: 10px 0;
+  overflow-x: auto;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard-subtab {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dashboard-subtab.active {
+  border-color: var(--accent);
+  background: #eaf4f0;
+  color: var(--accent);
+}
+
+.dashboard-section {
+  display: none;
+}
+
+.dashboard-section.active {
+  display: block;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  margin: 24px 0 12px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.panel {
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.panel-heading h3 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.panel-heading span {
+  max-width: 460px;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.layout-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.layout-wide-left {
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+}
+
+.layout-narrow-left {
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+}
+
+.chart-box {
+  width: 100%;
+  min-height: 360px;
+  display: block;
+  position: relative;
+}
+
+.chart-box-large {
+  min-height: 440px;
+}
+
+.chart-box-compact {
+  min-height: 360px;
+}
+
+.square-plot {
+  min-height: 440px;
+}
+
+#pnl-chart,
+#account-forecast-chart,
+#exchange-rate-chart {
+  min-height: 430px;
+}
+
+.js-plotly-plot,
+.plot-container,
+.svg-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.modebar {
+  right: 8px !important;
+}
+
+.table-title {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.table th {
+  white-space: nowrap;
+  background: #f3f7f5;
+  color: #26332d;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+#timeline-card .table {
+  min-width: 1120px;
+}
+
+#timeline-card th:first-child,
+#timeline-card td:first-child {
+  min-width: 88px;
+  white-space: nowrap;
+}
+
+#timeline-card th:nth-child(4),
+#timeline-card td:nth-child(4) {
+  min-width: 72px;
+}
+
+#timeline-card th:nth-child(10),
+#timeline-card td:nth-child(10) {
+  min-width: 320px;
+}
+
+#timeline-card small {
+  display: block;
+  margin-top: 2px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cash-box,
+.metrics-table,
+.status-row {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.control-row select {
+  min-width: 116px;
+}
+
+.model-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  min-height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.model-group legend {
+  width: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.model-group label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+  font-size: 13px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-row {
+  display: grid;
+  gap: 4px;
+  min-height: 22px;
+  margin: 4px 0 8px;
+}
+
+.table-section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.watchlist-form {
+  display: flex;
+  gap: 8px;
+  max-width: 520px;
+  margin-bottom: 16px;
+}
+
+.watchlist-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.privacy-sensitive {
+  transition: visibility 0.2s ease;
 }
 
 .regime-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -196,17 +445,17 @@ form button {
 
 .regime-caution {
   background: #fff8e1;
-  color: #8d6e00;
+  color: #7a5d00;
 }
 
 .regime-riskoff {
   background: #fff3e0;
-  color: #e65100;
+  color: #b94e00;
 }
 
 .regime-panic {
   background: #ffebee;
-  color: #b71c1c;
+  color: #a51d1d;
 }
 
 .regime-reasons {
@@ -215,92 +464,71 @@ form button {
   white-space: normal;
 }
 
-/* =========================
-   Anomaly Detection Box
-========================= */
-.anomaly-box {
-  margin-top: 14px;
-  padding: 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.anomaly-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 8px 0 12px;
-  flex-wrap: wrap;
-}
-
-.anomaly-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.anomaly-low {
-  background: #e8f5e9;
-  color: #1b5e20;
-}
-
-.anomaly-medium {
-  background: #fff8e1;
-  color: #8d6e00;
-}
-
-.anomaly-high {
-  background: #fff3e0;
-  color: #e65100;
-}
-
-.anomaly-extreme {
-  background: #ffebee;
-  color: #b71c1c;
-}
-
-.anomaly-unknown {
-  background: #eeeeee;
-  color: #424242;
-}
-
-.anomaly-score,
-.anomaly-date {
-  font-size: 13px;
-  color: #666;
-}
-
-.anomaly-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.anomaly-grid div {
-  padding: 10px;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-
-.anomaly-grid .label {
-  display: block;
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.anomaly-reasons {
-  margin: 12px 0 0;
-  padding-left: 18px;
-  color: #374151;
-  line-height: 1.5;
-}
-
 .muted {
-  color: #777;
+  color: var(--muted);
   font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+  .layout-two,
+  .layout-wide-left,
+  .layout-narrow-left,
+  .watchlist-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-heading {
+    display: block;
+  }
+
+  .panel-heading span {
+    display: block;
+    margin-top: 6px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    width: min(100% - 20px, 1440px);
+    padding-top: 12px;
+  }
+
+  .app-header,
+  .section-heading,
+  .table-section-header {
+    display: block;
+  }
+
+  .account-total {
+    min-width: 0;
+    margin-top: 12px;
+    text-align: left;
+  }
+
+  .section-tabs {
+    overflow-x: auto;
+  }
+
+  .section-tabs .nav-link {
+    white-space: nowrap;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  .chart-box,
+  .chart-box-large,
+  .chart-box-compact,
+  .square-plot,
+  #pnl-chart,
+  #account-forecast-chart,
+  #exchange-rate-chart {
+    min-height: 320px;
+  }
+
+  .watchlist-form {
+    display: grid;
+  }
 }

@@ -1,0 +1,80 @@
+<div class="section-heading">
+  <div>
+    <p class="eyebrow">Risk</p>
+    <h2>리스크와 노출</h2>
+  </div>
+</div>
+
+<section class="panel" id="risk-card">
+  <div class="panel-heading">
+    <h3>리스크와 노출 분석</h3>
+    <span>집중도, 통화, 자산군, 손실 포지션을 점검합니다.</span>
+  </div>
+  <div class="metric-grid" id="risk-summary"></div>
+
+  <h4 class="table-title">리스크 신호</h4>
+  <div class="table-scroll">
+    <table class="table table-bordered table-sm">
+      <thead>
+      <tr>
+        <th>수준</th>
+        <th>항목</th>
+        <th>설명</th>
+      </tr>
+      </thead>
+      <tbody id="risk-alerts-body"></tbody>
+    </table>
+  </div>
+
+  <div class="layout-two">
+    <div>
+      <h4 class="table-title">상위 포지션</h4>
+      <div class="table-scroll">
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>종목</th>
+            <th>자산군</th>
+            <th>평가금액</th>
+            <th>비중</th>
+            <th>손익률</th>
+          </tr>
+          </thead>
+          <tbody id="risk-top-positions-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h4 class="table-title">통화 노출</h4>
+      <div class="table-scroll">
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>통화</th>
+            <th>항목수</th>
+            <th>평가금액</th>
+            <th>비중</th>
+          </tr>
+          </thead>
+          <tbody id="risk-currency-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h4 class="table-title">자산군 노출</h4>
+  <div class="table-scroll">
+    <table class="table table-bordered table-sm">
+      <thead>
+      <tr>
+        <th>자산군</th>
+        <th>항목수</th>
+        <th>평가금액</th>
+        <th>비중</th>
+      </tr>
+      </thead>
+      <tbody id="risk-asset-body"></tbody>
+    </table>
+  </div>
+</section>

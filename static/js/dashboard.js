@@ -1,28 +1,31 @@
+function signedColor(value) {
+  return Number(value || 0) >= 0 ? "red" : "blue";
+}
+
 window.loadPortfolioTable = function () {
   window.loadJsonAndRender("/get_portfolio_data", (data) => {
     const tbody = window.$("portfolio-table-body");
     if (!tbody) return;
 
+    const rows = Array.isArray(data) ? data : [];
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7">표시할 보유 종목이 없습니다.</td></tr>`;
+      return;
+    }
+
     tbody.innerHTML = "";
-
-    data.forEach((row) => {
-      const tr = document.createElement("tr");
-
+    rows.forEach((row) => {
       const profitRate = Number(row.profit_rate || 0);
-      const profitRateColor = profitRate >= 0 ? "red" : "blue";
-
+      const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${row.account_number ?? ""}</td>
-        <td>${row.ticker ?? ""}</td>
+        <td>${window.escapeHTML(row.account_number ?? "")}</td>
+        <td>${window.escapeHTML(row.ticker ?? "")}</td>
         <td>${window.toLocaleNum(row.quantity)}</td>
         <td>${window.toLocaleNum(row.purchase_amount)} KRW</td>
         <td>${window.toLocaleNum(row.evaluation_amount)} KRW</td>
-        <td>${window.toLocaleNum(row.profit_loss)} KRW</td>
-        <td style="color:${profitRateColor}; font-weight:bold;">
-          ${profitRate.toFixed(2)}%
-        </td>
+        <td style="color:${signedColor(row.profit_loss)}; font-weight:600;">${window.toLocaleNum(row.profit_loss)} KRW</td>
+        <td style="color:${signedColor(profitRate)}; font-weight:700;">${profitRate.toFixed(2)}%</td>
       `;
-
       tbody.appendChild(tr);
     });
   });
@@ -34,19 +37,18 @@ window.loadPieChart = function () {
 
     Plotly.newPlot(
       "pie-chart",
-      [
-        {
-          labels: data.labels || [],
-          values: data.values || [],
-          type: "pie",
-        },
-      ],
+      [{
+        labels: data.labels || [],
+        values: data.values || [],
+        type: "pie",
+        textinfo: "label+percent",
+        hoverinfo: "label+value+percent",
+      }],
       {
         margin: { t: 10, l: 10, r: 10, b: 10 },
+        showlegend: false,
       },
-      {
-        responsive: true,
-      }
+      { responsive: true }
     );
   });
 };
@@ -65,15 +67,14 @@ window.loadAccountChart = function () {
 
     const latestValue = window.toLocaleNum(data.latest_value);
     const latestProfit = Number(data.latest_profit || 0);
-    const latestProfitColor = latestProfit >= 0 ? "red" : "blue";
-
     const totalValueEl = window.$("total-value");
     if (totalValueEl) {
       totalValueEl.innerHTML = `
-        Total Value: ${latestValue} KRW
-        <span style="color:${latestProfitColor}; font-weight:bold;">
-          (${latestProfit.toFixed(2)}%)
-        </span>
+        <div class="mini-card-title">현재 총자산</div>
+        <div class="mini-card-value">${latestValue} KRW</div>
+        <div class="mini-card-sub" style="color:${signedColor(latestProfit)}; font-weight:700;">
+          시작 대비 ${latestProfit.toFixed(2)}%
+        </div>
       `;
     }
 
@@ -82,8 +83,10 @@ window.loadAccountChart = function () {
       y: data.total_values || [],
       type: "scatter",
       mode: "lines+markers",
-      name: "Total Account Value",
+      name: "총자산",
       yaxis: "y1",
+      line: { color: "#256f5b", width: 3 },
+      marker: { size: 5 },
     };
 
     const profitTrace = {
@@ -91,31 +94,31 @@ window.loadAccountChart = function () {
       y: data.profits || [],
       type: "scatter",
       mode: "lines",
-      name: "Account Profit (%)",
+      name: "수익률",
       yaxis: "y2",
-      line: { dash: "dot" },
+      line: { color: "#2f5f98", dash: "dot", width: 2 },
     };
 
     const layout = {
-      title: "Portfolio Total Value & Profit",
-      xaxis: { title: "Date" },
+      title: "",
+      hovermode: "x unified",
+      xaxis: { title: "날짜" },
       yaxis: {
-        title: "Total Value (KRW)",
+        title: "총자산 (KRW)",
         side: "left",
         showgrid: false,
       },
       yaxis2: {
-        title: "Profit (%)",
+        title: "수익률 (%)",
         overlaying: "y",
         side: "right",
         showgrid: false,
       },
-      margin: { t: 40, r: 10, l: 50, b: 40 },
+      legend: { orientation: "h", y: -0.18 },
+      margin: { t: 18, r: 50, l: 68, b: 64 },
     };
 
-    Plotly.newPlot("profit-chart", [totalValueTrace, profitTrace], layout, {
-      responsive: true,
-    }).then(() => {
+    Plotly.newPlot("profit-chart", [totalValueTrace, profitTrace], layout, { responsive: true }).then(() => {
       const latestDate = data.dates?.[data.dates.length - 1];
       if (latestDate) {
         window.onDateSelected(window.normalizeDate(latestDate));
@@ -140,30 +143,18 @@ window.renderSnapshotSummary = function (date, stockSum) {
   const meta = window.$("snapshot-meta");
 
   if (meta) {
-    meta.innerHTML = `선택 날짜: <strong>${date}</strong>`;
+    meta.innerHTML = `선택 날짜: <strong>${window.escapeHTML(date)}</strong>`;
   }
 
   if (!root) return;
 
-  const cards = [
-    {
-      label: "주식 평가금액 합",
-      value: `${window.toLocaleNum(stockSum)} KRW`,
-      sub: "스냅샷 기준",
-    },
-  ];
-
-  root.innerHTML = cards
-    .map(
-      (c) => `
-      <div class="mini-card">
-        <div class="mini-card-title">${c.label}</div>
-        <div class="mini-card-value">${c.value}</div>
-        <div class="mini-card-sub">${c.sub}</div>
-      </div>
-    `
-    )
-    .join("");
+  root.innerHTML = `
+    <div class="mini-card">
+      <div class="mini-card-title">주식 평가금액</div>
+      <div class="mini-card-value">${window.toLocaleNum(stockSum)} KRW</div>
+      <div class="mini-card-sub">스냅샷 기준</div>
+    </div>
+  `;
 };
 
 window.loadSnapshotDetail = function (date) {
@@ -171,65 +162,63 @@ window.loadSnapshotDetail = function (date) {
   const cashBox = window.$("snapshot-cash");
 
   if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="8">로딩중...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8">불러오는 중...</td></tr>`;
   }
 
   if (cashBox) {
-    cashBox.innerHTML = `로딩중...`;
+    cashBox.innerHTML = `불러오는 중...`;
   }
 
   fetch(`/api/snapshot?date=${encodeURIComponent(date)}`)
-    .then((r) => r.json())
-    .then((s) => {
-      if (s.error) {
+    .then((response) => response.json())
+    .then((snapshot) => {
+      if (snapshot.error) {
+        const message = window.escapeHTML(snapshot.error);
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="8" style="color:red;">❌ ${s.error}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" style="color:red;">${message}</td></tr>`;
         }
         if (cashBox) {
-          cashBox.innerHTML = `<span style="color:red;">❌ ${s.error}</span>`;
+          cashBox.innerHTML = `<span style="color:red;">${message}</span>`;
         }
         return;
       }
 
-      window.renderSnapshotSummary(s.date, s.summary?.stock_eval_sum ?? 0);
+      window.renderSnapshotSummary(snapshot.date, snapshot.summary?.stock_eval_sum ?? 0);
 
-      const rows = s.holdings || [];
+      const rows = snapshot.holdings || [];
       if (!tbody) return;
 
       if (rows.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8">보유 종목이 없습니다.</td></tr>`;
       } else {
         tbody.innerHTML = "";
-
-        rows.forEach((h) => {
-          const pnl = Number(h.pnl || 0);
-          const pnlColor = pnl >= 0 ? "red" : "blue";
-          const pnlPct = Number(h.pnl_pct || 0);
-
+        rows.forEach((holding) => {
+          const pnl = Number(holding.pnl || 0);
+          const pnlPct = Number(holding.pnl_pct || 0);
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${h.name || ""}</td>
-            <td>${h.currency || ""}</td>
-            <td>${window.toLocaleNum(h.qty)}</td>
-            <td>${window.toLocaleNum(h.buy_amount)}</td>
-            <td>${window.toLocaleNum(h.eval_amount)}</td>
-            <td style="color:${pnlColor}; font-weight:600;">${window.toLocaleNum(pnl)}</td>
-            <td style="color:${pnlColor}; font-weight:600;">${pnlPct.toFixed(2)}%</td>
-            <td>${h.weight || ""}</td>
+            <td>${window.escapeHTML(holding.name || "")}</td>
+            <td>${window.escapeHTML(holding.currency || "")}</td>
+            <td>${window.toLocaleNum(holding.qty)}</td>
+            <td>${window.toLocaleNum(holding.buy_amount)}</td>
+            <td>${window.toLocaleNum(holding.eval_amount)}</td>
+            <td style="color:${signedColor(pnl)}; font-weight:600;">${window.toLocaleNum(pnl)}</td>
+            <td style="color:${signedColor(pnlPct)}; font-weight:600;">${pnlPct.toFixed(2)}%</td>
+            <td>${window.escapeHTML(holding.weight || "")}</td>
           `;
           tbody.appendChild(tr);
         });
       }
 
-      const cash = s.summary?.cash || [];
+      const cash = snapshot.summary?.cash || [];
       if (cashBox) {
         if (cash.length === 0) {
           cashBox.innerHTML = "표시할 예수금 데이터가 없습니다.";
         } else {
           cashBox.innerHTML = cash
-            .map((c) => {
-              const cur = c.currency ? `(${c.currency})` : "";
-              return `• ${c.type} ${cur}: ${window.toLocaleNum(c.eval_amount)} KRW (수량: ${window.toLocaleNum(c.qty)})`;
+            .map((item) => {
+              const currency = item.currency ? `(${window.escapeHTML(item.currency)})` : "";
+              return `${window.escapeHTML(item.type)} ${currency}: ${window.toLocaleNum(item.eval_amount)} KRW (수량: ${window.toLocaleNum(item.qty)})`;
             })
             .join("<br>");
         }
@@ -239,11 +228,11 @@ window.loadSnapshotDetail = function (date) {
       console.error("snapshot fetch error:", err);
 
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="8" style="color:red;">❌ snapshot fetch failed</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="color:red;">스냅샷을 불러오지 못했습니다.</td></tr>`;
       }
 
       if (cashBox) {
-        cashBox.innerHTML = `<span style="color:red;">❌ snapshot fetch failed</span>`;
+        cashBox.innerHTML = `<span style="color:red;">스냅샷을 불러오지 못했습니다.</span>`;
       }
     });
 };
@@ -253,13 +242,12 @@ window.setupPrivacyToggle = function () {
   if (!btn || window.AppBound.privacyToggle) return;
 
   let hidden = false;
-
   btn.addEventListener("click", () => {
     document.querySelectorAll(".privacy-sensitive").forEach((el) => {
       el.style.visibility = hidden ? "visible" : "hidden";
     });
 
-    btn.textContent = hidden ? "🔒 정보 숨기기" : "🔓 정보 보이기";
+    btn.textContent = hidden ? "정보 숨기기" : "정보 보이기";
     hidden = !hidden;
   });
 
