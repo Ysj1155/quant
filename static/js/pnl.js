@@ -133,7 +133,7 @@ window.loadPnlForDate = function (date) {
 };
 
 window.loadPnlPanel = function () {
-  window.loadJsonAndRender("/api/pnl/series", (data) => {
+  window.loadJsonAndRender(window.dashboardApiUrl("/api/pnl/series"), (data) => {
     if (data?.error) {
       console.error("pnl series api error", data.error);
       return;

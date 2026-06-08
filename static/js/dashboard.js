@@ -62,7 +62,7 @@ window.onDateSelected = function (dateStr) {
 };
 
 window.loadAccountChart = function () {
-  window.loadJsonAndRender("/get_account_value_data", (data) => {
+  window.loadJsonAndRender(window.dashboardApiUrl("/get_account_value_data"), (data) => {
     if (!window.$("profit-chart")) return;
 
     const latestValue = window.toLocaleNum(data.latest_value);

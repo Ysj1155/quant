@@ -1,5 +1,10 @@
 window.AppState = {
   dataTabLoaded: false,
+  dashboardPeriod: {
+    period: "3m",
+    startDate: "",
+    endDate: "",
+  },
   intervals: {
     marketCards: null,
   },
@@ -133,4 +138,30 @@ window.fetchJsonCached = function (url, ttlMs = 15000) {
 
   _inflight.set(url, p);
   return p;
+};
+
+window.clearClientCache = function () {
+  _clientCache.clear();
+  _inflight.clear();
+};
+
+window.dashboardPeriodParams = function (extra = {}) {
+  const params = new URLSearchParams();
+  const state = window.AppState.dashboardPeriod || {};
+  params.set("period", state.period || "all");
+  if (state.startDate) params.set("start_date", state.startDate);
+  if (state.endDate) params.set("end_date", state.endDate);
+
+  Object.entries(extra).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.set(key, value);
+    }
+  });
+  return params;
+};
+
+window.dashboardApiUrl = function (path, extra = {}) {
+  const params = window.dashboardPeriodParams(extra);
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 };

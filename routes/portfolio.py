@@ -15,11 +15,18 @@ from services.performance import build_performance_summary
 from services.portfolio import build_pnl_from_snapshots, build_pnl_series, build_pnl_timeseries
 from services.risk import build_risk_summary
 from services.security_resolver import build_security_resolution_summary
-from services.signals import build_account_signals
 from services.snapshots import list_snapshot_dates, load_snapshot
 from services.timeline import build_investment_timeline
 
 portfolio_bp = Blueprint("portfolio", __name__)
+
+
+def _period_args():
+    return {
+        "period": (request.args.get("period") or "all").strip() or "all",
+        "start_date": (request.args.get("start_date") or "").strip() or None,
+        "end_date": (request.args.get("end_date") or "").strip() or None,
+    }
 
 
 @portfolio_bp.route("/get_portfolio_data")
@@ -54,12 +61,25 @@ def get_pie_chart_data():
 
 
 @portfolio_bp.route("/get_account_value_data")
-@cache.cached(timeout=60)
+@cache.cached(timeout=60, query_string=True)
 def get_account_value_data():
     try:
         df = load_account_value_rows()
         if df.empty:
             return jsonify({"error": "No account value data found"}), 500
+
+        from services.periods import filter_by_period
+
+        df, period_range = filter_by_period(df, "date", **_period_args())
+        if df.empty:
+            return jsonify({
+                "dates": [],
+                "total_values": [],
+                "profits": [],
+                "latest_value": None,
+                "latest_profit": 0,
+                "period": period_range.__dict__,
+            })
 
         dates = df["date"].dt.strftime("%Y-%m-%d").tolist()
         values = df["total_value"].astype(float).tolist()
@@ -72,6 +92,7 @@ def get_account_value_data():
             "profits": profits,
             "latest_value": values[-1],
             "latest_profit": profits[-1],
+            "period": period_range.__dict__,
         })
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
@@ -135,9 +156,9 @@ def api_pnl_events():
 
 
 @portfolio_bp.route("/api/pnl/series")
-@cache.cached(timeout=60)
+@cache.cached(timeout=60, query_string=True)
 def api_pnl_series():
-    data = build_pnl_timeseries()
+    data = build_pnl_timeseries(**_period_args())
     status = 200 if data.get("ok") else 500
     return jsonify(data), status
 
@@ -157,28 +178,22 @@ def api_timeline_events():
         date=date,
         event_type=event_type,
         full_scan=full_scan,
+        **_period_args(),
     )
     return jsonify(data), (200 if data.get("ok") else 500)
 
 
 @portfolio_bp.route("/api/performance/summary")
-@cache.cached(timeout=60)
+@cache.cached(timeout=60, query_string=True)
 def api_performance_summary():
-    data = build_performance_summary()
+    data = build_performance_summary(**_period_args())
     return jsonify(data), (200 if data.get("ok") else 500)
 
 
 @portfolio_bp.route("/api/risk/summary")
-@cache.cached(timeout=60)
+@cache.cached(timeout=60, query_string=True)
 def api_risk_summary():
-    data = build_risk_summary()
-    return jsonify(data), (200 if data.get("ok") else 500)
-
-
-@portfolio_bp.route("/api/signals/account")
-@cache.cached(timeout=60)
-def api_account_signals():
-    data = build_account_signals()
+    data = build_risk_summary(**_period_args())
     return jsonify(data), (200 if data.get("ok") else 500)
 
 

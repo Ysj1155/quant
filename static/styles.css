@@ -184,6 +184,66 @@ body {
   color: var(--accent);
 }
 
+.dashboard-period-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px 0 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.period-label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.period-label strong {
+  color: var(--text);
+}
+
+.period-buttons,
+.period-custom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.period-button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.period-button.active {
+  border-color: var(--accent);
+  background: #eaf4f0;
+  color: var(--accent);
+}
+
+.period-custom input {
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 13px;
+}
+
 .dashboard-section {
   display: none;
 }
@@ -427,41 +487,6 @@ body {
 
 .privacy-sensitive {
   transition: visibility 0.2s ease;
-}
-
-.regime-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.regime-normal {
-  background: #e8f5e9;
-  color: #1b5e20;
-}
-
-.regime-caution {
-  background: #fff8e1;
-  color: #7a5d00;
-}
-
-.regime-riskoff {
-  background: #fff3e0;
-  color: #b94e00;
-}
-
-.regime-panic {
-  background: #ffebee;
-  color: #a51d1d;
-}
-
-.regime-reasons {
-  margin-top: 6px;
-  line-height: 1.4;
-  white-space: normal;
 }
 
 .muted {

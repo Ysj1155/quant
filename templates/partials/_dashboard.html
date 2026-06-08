@@ -4,11 +4,30 @@
     <button class="dashboard-subtab" id="dashboard-subtab-quality" onclick="showDashboardSection('quality')" type="button">데이터 품질</button>
     <button class="dashboard-subtab" id="dashboard-subtab-performance" onclick="showDashboardSection('performance')" type="button">성과</button>
     <button class="dashboard-subtab" id="dashboard-subtab-risk" onclick="showDashboardSection('risk')" type="button">리스크</button>
-    <button class="dashboard-subtab" id="dashboard-subtab-signals" onclick="showDashboardSection('signals')" type="button">이상징후</button>
     <button class="dashboard-subtab" id="dashboard-subtab-timeline" onclick="showDashboardSection('timeline')" type="button">이벤트</button>
     <button class="dashboard-subtab" id="dashboard-subtab-details" onclick="showDashboardSection('details')" type="button">날짜 상세</button>
     <button class="dashboard-subtab" id="dashboard-subtab-forecast" onclick="showDashboardSection('forecast')" type="button">예측 검토</button>
   </nav>
+
+  <div class="dashboard-period-bar" aria-label="dashboard period filter">
+    <div class="period-label">
+      <span>기간</span>
+      <strong id="dashboard-period-current">최근 3개월</strong>
+    </div>
+    <div class="period-buttons" role="group" aria-label="quick periods">
+      <button class="period-button" data-dashboard-period="all" type="button">전체</button>
+      <button class="period-button" data-dashboard-period="1w" type="button">1주</button>
+      <button class="period-button" data-dashboard-period="1m" type="button">1개월</button>
+      <button class="period-button active" data-dashboard-period="3m" type="button">3개월</button>
+      <button class="period-button" data-dashboard-period="ytd" type="button">올해</button>
+    </div>
+    <div class="period-custom">
+      <input id="dashboard-period-start" type="date" aria-label="start date">
+      <span>~</span>
+      <input id="dashboard-period-end" type="date" aria-label="end date">
+      <button class="period-button" id="dashboard-period-apply" type="button">적용</button>
+    </div>
+  </div>
 
   <section class="dashboard-section active" id="dashboard-section-overview">
     {% include "partials/dashboard/_overview.html" %}
@@ -24,10 +43,6 @@
 
   <section class="dashboard-section" id="dashboard-section-risk">
     {% include "partials/dashboard/_risk.html" %}
-  </section>
-
-  <section class="dashboard-section" id="dashboard-section-signals">
-    {% include "partials/dashboard/_signals.html" %}
   </section>
 
   <section class="dashboard-section" id="dashboard-section-timeline">

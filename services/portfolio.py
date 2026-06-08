@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from extensions import cache
+from services.periods import filter_date_strings
 from services.snapshots import list_snapshot_dates, load_snapshot
 
 
@@ -138,7 +139,7 @@ def build_pnl_from_snapshots(asof_date: Optional[str] = None) -> Dict:
     }
 
 @cache.memoize(timeout=60)
-def build_pnl_timeseries() -> Dict:
+def build_pnl_timeseries(period: str = "all", start_date: Optional[str] = None, end_date: Optional[str] = None) -> Dict:
     """
     차트용 시계열 생성:
     - dates: 스냅샷 날짜 목록
@@ -157,9 +158,20 @@ def build_pnl_timeseries() -> Dict:
             "events": [],
         }
 
+    filtered_dates, period_range = filter_date_strings(dates, period, start_date, end_date)
+    if not filtered_dates:
+        return {
+            "ok": True,
+            "dates": [],
+            "unrealized_pnl": [],
+            "realized_pnl_cum": [],
+            "events": [],
+            "period": period_range.__dict__,
+        }
+
     # 1) 날짜별 미실현 손익 합계
     unrealized_pnl: List[float] = []
-    for d in dates:
+    for d in filtered_dates:
         df = _holdings_df_from_snapshot(d)
         if df.empty or "pnl" not in df.columns:
             unrealized_pnl.append(0.0)
@@ -168,20 +180,9 @@ def build_pnl_timeseries() -> Dict:
             unrealized_pnl.append(float(vals.sum()))
 
     # 2) 이벤트 기반 실현손익 누적합
-    series_data = build_pnl_series()
-    if not series_data.get("ok"):
-        return {
-            "ok": False,
-            "error": series_data.get("error", "failed to build pnl series"),
-            "dates": dates,
-            "unrealized_pnl": unrealized_pnl,
-            "realized_pnl_cum": [0.0 for _ in dates],
-            "events": [],
-        }
+    events = _build_sell_events_for_window(dates, filtered_dates)
 
-    events = series_data.get("events", []) or []
-
-    realized_by_date: Dict[str, float] = {d: 0.0 for d in dates}
+    realized_by_date: Dict[str, float] = {d: 0.0 for d in filtered_dates}
     for e in events:
         d = e.get("date")
         if d not in realized_by_date:
@@ -190,17 +191,78 @@ def build_pnl_timeseries() -> Dict:
 
     realized_pnl_cum: List[float] = []
     running = 0.0
-    for d in dates:
+    for d in filtered_dates:
         running += realized_by_date.get(d, 0.0)
         realized_pnl_cum.append(float(running))
 
     return {
         "ok": True,
-        "dates": dates,
+        "dates": filtered_dates,
         "unrealized_pnl": unrealized_pnl,
         "realized_pnl_cum": realized_pnl_cum,
         "events": events,
+        "period": period_range.__dict__,
     }
+
+
+def _build_sell_events_for_window(all_dates: List[str], filtered_dates: List[str]) -> List[Dict]:
+    if len(all_dates) < 2 or not filtered_dates:
+        return []
+
+    start_idx = all_dates.index(filtered_dates[0])
+    scan_dates = all_dates[max(0, start_idx - 1): all_dates.index(filtered_dates[-1]) + 1]
+    if len(scan_dates) < 2:
+        return []
+
+    prev_df = _holdings_df_from_snapshot(scan_dates[0])
+    prev_df["key"] = prev_df.get("account", "").fillna("").astype(str) + "|" + prev_df.get("name", "").fillna("").astype(str)
+    prev_map = {r["key"]: r for r in prev_df.to_dict("records")}
+
+    target_dates = set(filtered_dates)
+    events: List[Dict] = []
+
+    for d in scan_dates[1:]:
+        cur_df = _holdings_df_from_snapshot(d)
+        cur_df["key"] = cur_df.get("account", "").fillna("").astype(str) + "|" + cur_df.get("name", "").fillna("").astype(str)
+        cur_map = {r["key"]: r for r in cur_df.to_dict("records")}
+
+        if d not in target_dates:
+            prev_map = cur_map
+            continue
+
+        prev_keys = set(prev_map.keys())
+        cur_keys = set(cur_map.keys())
+
+        for k in (prev_keys - cur_keys):
+            r = prev_map[k]
+            events.append({
+                "date": d,
+                "type": "sell_full",
+                "account": (r.get("account") or ""),
+                "name": (r.get("name") or ""),
+                "qty_sold": float(r.get("qty", 0) or 0),
+                "realized_pnl_est": float(r.get("pnl", 0) or 0),
+            })
+
+        for k in (prev_keys & cur_keys):
+            pr = prev_map[k]
+            pq = float(pr.get("qty", 0) or 0)
+            cq = float(cur_map[k].get("qty", 0) or 0)
+            if pq > cq and pq > 0:
+                sold = pq - cq
+                pnl = float(pr.get("pnl", 0) or 0)
+                events.append({
+                    "date": d,
+                    "type": "sell_partial",
+                    "account": (pr.get("account") or ""),
+                    "name": (pr.get("name") or ""),
+                    "qty_sold": sold,
+                    "realized_pnl_est": (pnl / pq) * sold,
+                })
+
+        prev_map = cur_map
+
+    return events
 
 @cache.memoize(timeout=60)
 def build_pnl_series() -> Dict:

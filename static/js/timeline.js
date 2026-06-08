@@ -22,7 +22,7 @@ const TIMELINE_CONFIDENCE = {
 };
 
 window.loadTimelinePanel = function () {
-  window.loadJsonAndRender("/api/timeline/events?limit=80&full=0", (data) => {
+  window.loadJsonAndRender(window.dashboardApiUrl("/api/timeline/events", { limit: 80, full: 0 }), (data) => {
     window.renderTimelineSummary(data.summary || {});
     window.renderTimelineEvents(data.events || []);
   });

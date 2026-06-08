@@ -1,10 +1,62 @@
 window.loadPerformancePanel = function () {
-  window.loadJsonAndRender("/api/performance/summary", (data) => {
+  window.loadJsonAndRender(window.dashboardApiUrl("/api/performance/summary"), (data) => {
     window.renderPerformanceSummary(data);
+    window.renderPerformanceAdvanced(data.advanced_returns || {});
     window.renderPerformanceContributors(data.contributors || {});
     window.renderPerformanceMonthly(data.monthly_changes || []);
     window.renderPerformanceAssets(data.asset_type_summary || []);
   });
+};
+
+window.renderPerformanceAdvanced = function (advanced) {
+  const root = window.$("performance-advanced-summary");
+  const note = window.$("performance-advanced-note");
+  if (!root) return;
+
+  const pct = (value) => value == null ? "-" : `${window.toLocaleNum(value, 2)}%`;
+  const cards = [
+    {
+      label: "단순수익률",
+      value: pct(advanced.simple_return_pct),
+      sub: "계좌 총액 시작/종료 기준",
+      signed: advanced.simple_return_pct,
+    },
+    {
+      label: "계좌 TWR",
+      value: pct(advanced.account_twr_pct),
+      sub: "일별 계좌 변화율 연결",
+      signed: advanced.account_twr_pct,
+    },
+    {
+      label: "투자노출 TWR",
+      value: pct(advanced.investment_twr_pct),
+      sub: "매수/매도 흐름 조정",
+      signed: advanced.investment_twr_pct,
+    },
+    {
+      label: "추정 IRR",
+      value: pct(advanced.investment_irr_annual_pct),
+      sub: `연율 / 현금흐름 ${window.toLocaleNum(advanced.flow_count || 0)}건`,
+      signed: advanced.investment_irr_annual_pct,
+    },
+  ];
+
+  root.innerHTML = cards
+    .map((card) => {
+      const color = card.signed == null ? "" : ` style="color:${Number(card.signed) >= 0 ? "red" : "blue"};"`;
+      return `
+        <div class="mini-card">
+          <div class="mini-card-title">${window.escapeHTML(card.label)}</div>
+          <div class="mini-card-value"${color}>${window.escapeHTML(card.value)}</div>
+          <div class="mini-card-sub">${window.escapeHTML(card.sub)}</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  if (note) {
+    note.textContent = advanced.method_note || "";
+  }
 };
 
 window.renderPerformanceSummary = function (data) {
@@ -25,6 +77,12 @@ window.renderPerformanceSummary = function (data) {
       value: `${window.toLocaleNum(s.profit_loss)} KRW`,
       sub: `${window.toLocaleNum(s.profit_rate, 2)}%`,
       signed: Number(s.profit_loss || 0),
+    },
+    {
+      label: "기간 변화",
+      value: s.period_change == null ? "-" : `${window.toLocaleNum(s.period_change)} KRW`,
+      sub: s.period_change_pct == null ? data.period?.label || "-" : `${window.toLocaleNum(s.period_change_pct, 2)}% / ${data.period?.label || "-"}`,
+      signed: s.period_change,
     },
     {
       label: "최대 비중",

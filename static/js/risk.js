@@ -11,9 +11,8 @@ const RISK_BADGES = {
 };
 
 window.loadRiskPanel = function () {
-  window.loadJsonAndRender("/api/risk/summary", (data) => {
+  window.loadJsonAndRender(window.dashboardApiUrl("/api/risk/summary"), (data) => {
     window.renderRiskSummary(data);
-    window.renderRiskAlerts(data.alerts || []);
     window.renderRiskTopPositions(data.top_positions || []);
     window.renderRiskExposure("risk-currency-body", data.currency_exposure || [], "currency");
     window.renderRiskExposure("risk-asset-body", data.asset_type_exposure || [], "asset_type");
@@ -27,14 +26,11 @@ window.renderRiskSummary = function (data) {
   const s = data.summary || {};
   const c = data.concentration || {};
   const ar = data.account_risk || {};
-  const level = s.risk_level || "low";
-
   const cards = [
     {
-      label: "리스크 수준",
-      value: RISK_LABELS[level] || level,
-      sub: `${window.toLocaleNum(s.alert_count)}개 신호`,
-      badge: RISK_BADGES[level] || "secondary",
+      label: "보유 종목",
+      value: `${window.toLocaleNum(s.position_count)}개`,
+      sub: data.period?.label || data.asof_date || "-",
     },
     {
       label: "최대 종목 비중",
@@ -62,28 +58,6 @@ window.renderRiskSummary = function (data) {
       `;
     })
     .join("");
-};
-
-window.renderRiskAlerts = function (alerts) {
-  const tbody = window.$("risk-alerts-body");
-  if (!tbody) return;
-
-  if (!Array.isArray(alerts) || alerts.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3">현재 표시할 리스크 신호가 없습니다.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = "";
-  alerts.forEach((alert) => {
-    const badge = RISK_BADGES[alert.severity] || "secondary";
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><span class="badge text-bg-${badge}">${window.escapeHTML(RISK_LABELS[alert.severity] || alert.severity)}</span></td>
-      <td>${window.escapeHTML(alert.title || "")}</td>
-      <td>${window.escapeHTML(alert.message || "")}</td>
-    `;
-    tbody.appendChild(tr);
-  });
 };
 
 window.renderRiskTopPositions = function (positions) {

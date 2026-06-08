@@ -7,6 +7,7 @@ import pandas as pd
 
 from extensions import cache
 from services.analysis_utils import EPS, is_cash_type, mask_account
+from services.periods import resolve_period_range
 from services.snapshots import list_snapshot_dates, load_snapshot_frame
 
 
@@ -283,10 +284,15 @@ def build_investment_timeline(
     date: Optional[str] = None,
     event_type: Optional[str] = None,
     full_scan: bool = True,
+    period: str = "all",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
 ) -> Dict:
     dates = list_snapshot_dates()
     if len(dates) < 1:
         return {"ok": True, "events": [], "summary": {"total": 0}}
+
+    period_range = resolve_period_range(period, start_date, end_date, dates)
 
     events: List[Dict] = []
 
@@ -297,6 +303,8 @@ def build_investment_timeline(
         and not include_initial
         and date is None
         and event_type is None
+        and period_range.period == "all"
+        and period_range.start_date is None
     )
     if can_fast_scan:
         scanned_start = dates[-1]
@@ -313,7 +321,10 @@ def build_investment_timeline(
         return {
             "ok": True,
             "events": events,
-            "summary": _summarize_events(events, len(events), dates, True, scanned_start=scanned_start),
+            "summary": {
+                **_summarize_events(events, len(events), dates, True, scanned_start=scanned_start),
+                "period": period_range.__dict__,
+            },
         }
 
     prev_map: Dict[str, Dict] = {}
@@ -333,6 +344,11 @@ def build_investment_timeline(
 
     if date:
         events = [event for event in events if event.get("date") == date]
+    else:
+        if period_range.start_date:
+            events = [event for event in events if event.get("date") >= period_range.start_date]
+        if period_range.end_date:
+            events = [event for event in events if event.get("date") <= period_range.end_date]
     if event_type:
         events = [event for event in events if event.get("event_type") == event_type]
 
@@ -345,5 +361,10 @@ def build_investment_timeline(
     return {
         "ok": True,
         "events": events,
-        "summary": _summarize_events(events, total, dates, False),
+        "summary": {
+            **_summarize_events(events, total, dates, False),
+            "period": period_range.__dict__,
+            "date_start": period_range.start_date or dates[0],
+            "date_end": period_range.end_date or dates[-1],
+        },
     }
