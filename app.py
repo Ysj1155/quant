@@ -1,9 +1,8 @@
 # app.py
 import os
+from html import escape
 
-import markdown
 from data.csv_manager import process_account_value, process_portfolio_data
-from db.migration import migrate_portfolio, migrate_account_value
 from extensions import cache
 from flask import Flask, render_template
 from markupsafe import Markup
@@ -15,6 +14,11 @@ from routes.portfolio import portfolio_bp
 from routes.stocks import stocks_bp
 from routes.valuation import valuation_bp
 from routes.watchlist import watchlist_bp
+
+try:
+    import markdown
+except ModuleNotFoundError:
+    markdown = None
 
 AUTO_REFRESH_CSV = os.getenv("AUTO_REFRESH_CSV", "false").lower() in ("1", "true", "yes", "y")
 
@@ -35,6 +39,8 @@ def bootstrap_refresh():
 
     try:
         print("🔄 DB 마이그레이션 시작")
+        from db.migration import migrate_account_value, migrate_portfolio
+
         migrate_portfolio()
         migrate_account_value()
         print("✅ DB 마이그레이션 완료")
@@ -77,7 +83,7 @@ def index():
 def show_readme():
     with open("readme.md", "r", encoding="utf-8") as f:
         content = f.read()
-        html = markdown.markdown(content)
+        html = markdown.markdown(content) if markdown else f"<pre>{escape(content)}</pre>"
         return f"<div style='padding:40px;'>{Markup(html)}</div>"
 
 

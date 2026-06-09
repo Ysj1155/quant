@@ -5,6 +5,7 @@ window.AppState = {
     startDate: "",
     endDate: "",
   },
+  selectedWeeklyReport: "",
   intervals: {
     marketCards: null,
   },
@@ -14,6 +15,7 @@ window.AppBound = {
   profitChartClick: false,
   watchlistForm: false,
   privacyToggle: false,
+  weeklyReportSave: false,
 };
 
 window.$ = function (id) {

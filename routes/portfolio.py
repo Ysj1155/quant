@@ -17,6 +17,13 @@ from services.risk import build_risk_summary
 from services.security_resolver import build_security_resolution_summary
 from services.snapshots import list_snapshot_dates, load_snapshot
 from services.timeline import build_investment_timeline
+from services.weekly_report import (
+    build_weekly_report,
+    list_weekly_report_files,
+    read_weekly_report_file,
+    save_weekly_report_markdown,
+    update_weekly_report_file,
+)
 
 portfolio_bp = Blueprint("portfolio", __name__)
 
@@ -195,6 +202,63 @@ def api_performance_summary():
 def api_risk_summary():
     data = build_risk_summary(**_period_args())
     return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/reports/weekly")
+@cache.cached(timeout=60, query_string=True)
+def api_weekly_report():
+    args = _period_args()
+    if args["period"] == "all" and not args["start_date"] and not args["end_date"]:
+        args["period"] = "1w"
+    data = build_weekly_report(**args)
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/reports/weekly/save", methods=["POST"])
+def api_save_weekly_report():
+    args = _period_args()
+    if args["period"] == "all" and not args["start_date"] and not args["end_date"]:
+        args["period"] = "1w"
+    data = save_weekly_report_markdown(**args)
+    cache.clear()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/reports/weekly/files")
+@cache.cached(timeout=10)
+def api_weekly_report_files():
+    data = list_weekly_report_files()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/reports/weekly/file")
+def api_weekly_report_file():
+    name = (request.args.get("name") or "").strip()
+    if not name:
+        return jsonify({"ok": False, "error": "name is required"}), 400
+    try:
+        data = read_weekly_report_file(name)
+        return jsonify(data), (200 if data.get("ok") else 404)
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+
+
+@portfolio_bp.route("/api/reports/weekly/file", methods=["POST"])
+def api_update_weekly_report_file():
+    payload = request.get_json(silent=True) or {}
+    name = str(payload.get("name") or "").strip()
+    if not name:
+        return jsonify({"ok": False, "error": "name is required"}), 400
+    try:
+        data = update_weekly_report_file(
+            name=name,
+            manual_markdown=str(payload.get("manual_markdown") or ""),
+            tags=payload.get("tags") or [],
+        )
+        cache.clear()
+        return jsonify(data), (200 if data.get("ok") else 404)
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
 
 
 @portfolio_bp.route("/api/data-quality/summary")

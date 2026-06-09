@@ -10,12 +10,14 @@ window.initApp = function () {
     "loadWatchlist",
     "setupWatchlistForm",
     "setupPrivacyToggle",
+    "setupWeeklyReportSave",
     "loadMarketCards",
     "loadDataQualityPanel",
     "loadPnlPanel",
     "loadTimelinePanel",
     "loadPerformancePanel",
     "loadRiskPanel",
+    "loadWeeklyReportPanel",
   ].forEach((name) => {
     if (typeof window[name] === "function") {
       window[name]();
@@ -102,6 +104,7 @@ window.reloadPeriodSensitivePanels = function () {
     "loadTimelinePanel",
     "loadPerformancePanel",
     "loadRiskPanel",
+    "loadWeeklyReportPanel",
   ].forEach((name) => {
     if (typeof window[name] === "function") {
       window[name]();

@@ -296,6 +296,18 @@ body {
   text-align: right;
 }
 
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  max-width: 620px;
+}
+
+.panel-actions span {
+  max-width: none;
+}
+
 .layout-two {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -470,6 +482,174 @@ body {
   gap: 12px;
   align-items: center;
   margin-top: 16px;
+}
+
+.report-block {
+  margin-top: 18px;
+}
+
+.report-list {
+  margin: 8px 0 18px;
+  padding-left: 20px;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.report-list li {
+  margin: 6px 0;
+}
+
+.report-list.compact {
+  margin-bottom: 0;
+}
+
+.report-note-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.report-note-grid h5 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.report-archive-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.report-list-panel {
+  border-right: 1px solid var(--border);
+  padding-right: 12px;
+}
+
+.report-file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.report-file-button {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.report-file-button.active {
+  border-color: var(--accent);
+  background: #e7f2ef;
+}
+
+.report-file-title {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.report-file-meta,
+.report-file-tags {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.report-viewer-panel {
+  min-width: 0;
+}
+
+.report-editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.report-editor-toolbar h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.report-tag-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.report-tag-row label {
+  min-width: 36px;
+  font-weight: 700;
+}
+
+.report-tag-row input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.report-markdown-view {
+  max-height: 560px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-soft);
+}
+
+.report-markdown-view h1,
+.report-markdown-view h2,
+.report-markdown-view h3 {
+  margin-top: 14px;
+}
+
+.report-markdown-view table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.report-markdown-view th,
+.report-markdown-view td {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.report-editor {
+  margin-top: 12px;
+}
+
+.report-editor label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.report-editor textarea {
+  width: 100%;
+  min-height: 260px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.report-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .watchlist-form {
