@@ -277,6 +277,28 @@ def _summarize_events(events: List[Dict], total: Optional[int], dates: List[str]
     }
 
 
+def _bounded_scan_dates(dates: List[str], period_range, date: Optional[str]) -> tuple[List[str], set[str], List[str]]:
+    target_start = date or period_range.start_date
+    target_end = date or period_range.end_date
+
+    target_indices = [
+        idx
+        for idx, snapshot_date in enumerate(dates)
+        if (not target_start or snapshot_date >= target_start)
+        and (not target_end or snapshot_date <= target_end)
+    ]
+
+    if not target_indices:
+        return [], set(), []
+
+    first_idx = target_indices[0]
+    last_idx = target_indices[-1]
+    scan_start_idx = max(0, first_idx - 1)
+    scan_dates = dates[scan_start_idx:last_idx + 1]
+    target_dates = dates[first_idx:last_idx + 1]
+    return scan_dates, set(target_dates), target_dates
+
+
 @cache.memoize(timeout=60)
 def build_investment_timeline(
     limit: Optional[int] = 100,
@@ -328,27 +350,35 @@ def build_investment_timeline(
         }
 
     prev_map: Dict[str, Dict] = {}
+    scan_dates, target_date_set, target_dates = _bounded_scan_dates(dates, period_range, date)
 
-    for idx, current_date in enumerate(dates):
+    if not scan_dates:
+        return {
+            "ok": True,
+            "events": [],
+            "summary": {
+                **_summarize_events([], 0, [], False),
+                "period": period_range.__dict__,
+                "date_start": date or period_range.start_date,
+                "date_end": date or period_range.end_date,
+            },
+        }
+
+    for idx, current_date in enumerate(scan_dates):
         cur_map = _positions_for_date(current_date)
+        in_target_window = current_date in target_date_set
 
         if idx == 0:
-            if include_initial:
+            if include_initial and in_target_window:
                 for row in cur_map.values():
                     _append_new_position(events, current_date, row, initial=True)
             prev_map = cur_map
             continue
 
-        _append_diff_events(events, current_date, prev_map, cur_map)
+        if in_target_window:
+            _append_diff_events(events, current_date, prev_map, cur_map)
         prev_map = cur_map
 
-    if date:
-        events = [event for event in events if event.get("date") == date]
-    else:
-        if period_range.start_date:
-            events = [event for event in events if event.get("date") >= period_range.start_date]
-        if period_range.end_date:
-            events = [event for event in events if event.get("date") <= period_range.end_date]
     if event_type:
         events = [event for event in events if event.get("event_type") == event_type]
 
@@ -362,9 +392,9 @@ def build_investment_timeline(
         "ok": True,
         "events": events,
         "summary": {
-            **_summarize_events(events, total, dates, False),
+            **_summarize_events(events, total, target_dates, False),
             "period": period_range.__dict__,
-            "date_start": period_range.start_date or dates[0],
-            "date_end": period_range.end_date or dates[-1],
+            "date_start": date or period_range.start_date or dates[0],
+            "date_end": date or period_range.end_date or dates[-1],
         },
     }

@@ -5,6 +5,7 @@ window.loadPerformancePanel = function () {
     window.renderPerformanceContributors(data.contributors || {});
     window.renderPerformanceMonthly(data.monthly_changes || []);
     window.renderPerformanceAssets(data.asset_type_summary || []);
+    window.renderPerformanceEvidence(data.evidence_cards || []);
   });
 };
 
@@ -101,6 +102,34 @@ window.renderPerformanceSummary = function (data) {
           <div class="mini-card-value"${color}>${window.escapeHTML(card.value)}</div>
           <div class="mini-card-sub">${window.escapeHTML(card.sub)}</div>
         </div>
+      `;
+    })
+    .join("");
+};
+
+window.renderPerformanceEvidence = function (cards) {
+  const root = window.$("performance-evidence-cards");
+  if (!root) return;
+
+  if (!Array.isArray(cards) || cards.length === 0) {
+    root.innerHTML = `<div class="mini-card"><div class="mini-card-title">복기 근거</div><div class="mini-card-value">N/A</div><div class="mini-card-sub">표시할 근거 카드가 없습니다.</div></div>`;
+    return;
+  }
+
+  root.innerHTML = cards
+    .map((card) => {
+      const color = card.signed == null ? "" : ` style="color:${Number(card.signed) >= 0 ? "red" : "blue"};"`;
+      return `
+        <article class="evidence-card">
+          <div class="evidence-card-header">
+            <h5 class="evidence-card-title">${window.escapeHTML(card.title || "")}</h5>
+            <span class="evidence-card-source">${window.escapeHTML(card.source || "")}</span>
+          </div>
+          <div class="evidence-card-value"${color}>${window.escapeHTML(card.value || "-")}</div>
+          <p class="evidence-card-sub">${window.escapeHTML(card.sub || "")}</p>
+          <p class="evidence-card-detail">${window.escapeHTML(card.detail || "")}</p>
+          <p class="evidence-card-question">${window.escapeHTML(card.question || "")}</p>
+        </article>
       `;
     })
     .join("");

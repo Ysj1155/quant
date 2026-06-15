@@ -9,16 +9,23 @@
 <div class="layout-two layout-wide-left">
   <section class="panel">
     <div class="panel-heading">
-      <h3>총자산 추이</h3>
-      <span>클릭한 날짜의 상세 내역을 아래에서 확인합니다.</span>
+      <h3>총자산과 기간 수익률</h3>
+      <span>총자산 레벨과 기간 수익률을 분리해 보고, 날짜를 클릭해 상세 내역을 확인합니다.</span>
     </div>
     <div class="chart-box chart-box-large" id="profit-chart"></div>
   </section>
 
   <section class="panel">
     <div class="panel-heading">
-      <h3>종목별 비중</h3>
-      <span>예수금은 표와 비중에서 제외합니다.</span>
+      <h3>자산 노출</h3>
+      <div class="panel-actions">
+        <span id="exposure-mode-label">자산군 기준</span>
+        <div class="segmented-control" aria-label="asset exposure mode">
+          <button class="segmented-button active" data-exposure-mode="asset_type" type="button">자산군</button>
+          <button class="segmented-button" data-exposure-mode="holding" type="button">종목</button>
+          <button class="segmented-button" data-exposure-mode="currency" type="button">통화</button>
+        </div>
+      </div>
     </div>
     <div class="chart-box chart-box-compact" id="pie-chart"></div>
   </section>

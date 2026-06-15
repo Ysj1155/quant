@@ -318,6 +318,9 @@ async function loadFxForecastHistory() {
 }
 
 function bindFxForecastControls() {
+  if (window.AppBound?.fxForecastControls) return;
+  if (window.AppBound) window.AppBound.fxForecastControls = true;
+
   const refreshBtn = document.getElementById("fx-refresh-btn");
   if (refreshBtn) {
     refreshBtn.addEventListener("click", renderFxForecastChart);
@@ -347,8 +350,12 @@ function bindFxForecastControls() {
   modelEls.forEach(el => el.addEventListener("change", renderFxForecastChart));
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+window.loadFxForecastPanel = async function () {
   bindFxForecastControls();
   await renderFxForecastChart();
   await loadFxForecastHistory();
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindFxForecastControls();
 });

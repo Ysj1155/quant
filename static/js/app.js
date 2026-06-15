@@ -10,19 +10,16 @@ window.initApp = function () {
     "loadWatchlist",
     "setupWatchlistForm",
     "setupPrivacyToggle",
+    "setupExposureModeControls",
     "setupWeeklyReportSave",
     "loadMarketCards",
-    "loadDataQualityPanel",
-    "loadPnlPanel",
-    "loadTimelinePanel",
-    "loadPerformancePanel",
-    "loadRiskPanel",
-    "loadWeeklyReportPanel",
   ].forEach((name) => {
     if (typeof window[name] === "function") {
       window[name]();
     }
   });
+
+  window.AppState.loadedDashboardSections.overview = true;
 
   if (typeof window.loadMarketCards === "function" && !window.AppState.intervals.marketCards) {
     window.AppState.intervals.marketCards = setInterval(window.loadMarketCards, 60_000);
@@ -98,18 +95,11 @@ window.reloadPeriodSensitivePanels = function () {
     window.clearClientCache();
   }
 
-  [
-    "loadAccountChart",
-    "loadPnlPanel",
-    "loadTimelinePanel",
-    "loadPerformancePanel",
-    "loadRiskPanel",
-    "loadWeeklyReportPanel",
-  ].forEach((name) => {
-    if (typeof window[name] === "function") {
-      window[name]();
-    }
-  });
+  window.loadAccountChart?.();
+
+  const active = document.querySelector(".dashboard-section.active");
+  const activeId = active?.id?.replace("dashboard-section-", "") || "overview";
+  window.loadDashboardSectionData(activeId, { force: true });
 };
 
 window.showTab = function (tabId) {
@@ -130,16 +120,16 @@ window.showTab = function (tabId) {
   if (tabId === "data") {
     if (!window.AppState.dataTabLoaded) {
       window.loadTreemaps();
-      window.loadExchangeRateChart();
+      window.loadFxForecastPanel?.();
       window.AppState.dataTabLoaded = true;
 
       setTimeout(() => {
-        ["sp500-treemap", "portfolio-treemap", "exchange-rate-chart"].forEach((id) => {
+        ["sp500-treemap", "exchange-rate-chart"].forEach((id) => {
           window.forceRelayout(id);
         });
       }, 0);
     } else {
-      ["sp500-treemap", "portfolio-treemap", "exchange-rate-chart"].forEach((id) => {
+      ["sp500-treemap", "exchange-rate-chart"].forEach((id) => {
         window.safePlotlyResize(id);
         window.forceRelayout(id);
       });
@@ -162,6 +152,8 @@ window.showDashboardSection = function (sectionId) {
   const button = window.$(`dashboard-subtab-${sectionId}`);
   if (button) button.classList.add("active");
 
+  window.loadDashboardSectionData(sectionId);
+
   const chartIdsBySection = {
     overview: ["profit-chart", "pie-chart"],
     timeline: ["pnl-chart"],
@@ -176,10 +168,34 @@ window.showDashboardSection = function (sectionId) {
   }, 0);
 };
 
+window.loadDashboardSectionData = function (sectionId, options = {}) {
+  const force = Boolean(options.force);
+  const loaded = window.AppState.loadedDashboardSections || {};
+  if (!force && loaded[sectionId]) return;
+
+  const loadersBySection = {
+    overview: ["loadPortfolioTable", "loadPieChart", "loadAccountChart", "loadMarketCards"],
+    quality: ["loadDataQualityPanel"],
+    performance: ["loadPerformancePanel"],
+    risk: ["loadRiskPanel"],
+    timeline: ["loadPnlPanel", "loadTimelinePanel"],
+    report: ["loadWeeklyReportPanel"],
+    forecast: ["loadAccountForecastPanel"],
+  };
+
+  (loadersBySection[sectionId] || []).forEach((name) => {
+    if (typeof window[name] === "function") {
+      window[name]();
+    }
+  });
+
+  loaded[sectionId] = true;
+  window.AppState.loadedDashboardSections = loaded;
+};
+
 window.addEventListener("resize", () => {
   [
     "sp500-treemap",
-    "portfolio-treemap",
     "exchange-rate-chart",
     "profit-chart",
     "pie-chart",

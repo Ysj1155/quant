@@ -16,34 +16,6 @@ window.loadTreemaps = function () {
       { responsive: true }
     ).then(() => window.forceRelayout("sp500-treemap"));
   });
-
-  window.loadJsonAndRender("/get_portfolio_sector_data", (data) => {
-    const sectors = Object.keys(data);
-    const values = sectors.map((s) => data[s].total_value);
-
-    const hover = sectors.map((s) => {
-      const stocks = (data[s].stocks || [])
-        .map((x) => `${x.ticker || "Unknown"}: $${window.toLocaleNum(x.price)}`)
-        .join("<br>");
-      return `${s}<br>${stocks}`;
-    });
-
-    Plotly.newPlot(
-      "portfolio-treemap",
-      [
-        {
-          type: "treemap",
-          labels: sectors,
-          parents: Array(sectors.length).fill(""),
-          values,
-          text: hover,
-          hoverinfo: "text",
-        },
-      ],
-      { margin: { t: 10, l: 10, r: 10, b: 10 }, height: 440, autosize: true },
-      { responsive: true }
-    ).then(() => window.forceRelayout("portfolio-treemap"));
-  });
 };
 
 window.loadExchangeRateChart = function () {

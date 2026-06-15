@@ -6,6 +6,7 @@ window.AppState = {
     endDate: "",
   },
   selectedWeeklyReport: "",
+  loadedDashboardSections: {},
   intervals: {
     marketCards: null,
   },
@@ -16,6 +17,9 @@ window.AppBound = {
   watchlistForm: false,
   privacyToggle: false,
   weeklyReportSave: false,
+  exposureMode: false,
+  fxForecastControls: false,
+  accountForecastControls: false,
 };
 
 window.$ = function (id) {

@@ -1,15 +1,8 @@
 from flask import Blueprint, jsonify, request
 
-from domain.sector import (
-    add_to_bucket,
-    get_etf_sector_weights,
-    get_sector_for_symbol,
-    is_etf,
-    normalize_symbol,
-)
 from extensions import cache
 from services.data_quality import build_data_quality_summary
-from services.dashboard_data import load_account_value_rows, load_current_portfolio_rows
+from services.dashboard_data import build_portfolio_exposure, load_account_value_rows, load_current_portfolio_rows
 from services.kr_security_master import get_kr_security_master_summary, refresh_kr_security_master
 from services.performance import build_performance_summary
 from services.portfolio import build_pnl_from_snapshots, build_pnl_series, build_pnl_timeseries
@@ -17,12 +10,12 @@ from services.risk import build_risk_summary
 from services.security_resolver import build_security_resolution_summary
 from services.snapshots import list_snapshot_dates, load_snapshot
 from services.timeline import build_investment_timeline
-from services.weekly_report import (
-    build_weekly_report,
-    list_weekly_report_files,
-    read_weekly_report_file,
-    save_weekly_report_markdown,
-    update_weekly_report_file,
+from services.period_report import (
+    build_period_report,
+    list_period_report_files,
+    read_period_report_file,
+    save_period_report_markdown,
+    update_period_report_file,
 )
 
 portfolio_bp = Blueprint("portfolio", __name__)
@@ -34,6 +27,17 @@ def _period_args():
         "start_date": (request.args.get("start_date") or "").strip() or None,
         "end_date": (request.args.get("end_date") or "").strip() or None,
     }
+
+
+def _invalidate_report_file_cache():
+    cache.delete_memoized(api_period_report_files)
+
+
+def _invalidate_security_quality_cache():
+    cache.delete_memoized(api_data_quality_summary)
+    cache.delete_memoized(api_security_resolution)
+    cache.delete_memoized(api_kr_security_master)
+    cache.delete_memoized(build_data_quality_summary)
 
 
 @portfolio_bp.route("/get_portfolio_data")
@@ -49,22 +53,26 @@ def get_portfolio_data():
 @cache.cached(timeout=30)
 def get_pie_chart_data():
     try:
-        rows = load_current_portfolio_rows()
-        if not rows:
-            return jsonify({"labels": [], "values": [], "total_value": "0 KRW"})
-
-        tickers = [row["ticker"] for row in rows]
-        amounts = [row["evaluation_amount"] for row in rows]
-        total = sum(amounts)
-        values = [(amount / total) * 100 if total else 0 for amount in amounts]
+        data = build_portfolio_exposure(mode="holding")
 
         return jsonify({
-            "labels": tickers,
-            "values": values,
-            "total_value": f"{int(total):,} KRW",
+            "labels": [row["label"] for row in data["exposures"]],
+            "values": [row["weight_pct"] for row in data["exposures"]],
+            "total_value": f"{int(data['total_value']):,} KRW",
+            "exposures": data["exposures"],
         })
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
+
+
+@portfolio_bp.route("/api/portfolio/exposure")
+@cache.cached(timeout=30, query_string=True)
+def api_portfolio_exposure():
+    mode = (request.args.get("mode") or "asset_type").strip()
+    try:
+        return jsonify(build_portfolio_exposure(mode=mode))
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
 
 
 @portfolio_bp.route("/get_account_value_data")
@@ -101,39 +109,6 @@ def get_account_value_data():
             "latest_profit": profits[-1],
             "period": period_range.__dict__,
         })
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
-
-
-@portfolio_bp.route("/get_portfolio_sector_data")
-@cache.cached(timeout=60 * 10)
-def get_portfolio_sector_data():
-    """Build sector exposure from current stock and ETF holdings."""
-    try:
-        rows = load_current_portfolio_rows()
-        if not rows:
-            return jsonify({})
-
-        bucket = {}
-        for row in rows:
-            raw = row["ticker"]
-            eval_amount = float(row["evaluation_amount"] or 0)
-            symbol = normalize_symbol(raw)
-            if not symbol:
-                continue
-
-            if is_etf(symbol):
-                weights = get_etf_sector_weights(symbol)
-                if weights:
-                    for sector, weight in weights.items():
-                        add_to_bucket(bucket, sector, symbol, eval_amount * weight)
-                else:
-                    add_to_bucket(bucket, "Unknown", symbol, eval_amount)
-            else:
-                sector = get_sector_for_symbol(symbol)
-                add_to_bucket(bucket, sector, symbol, eval_amount)
-
-        return jsonify(bucket)
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
 
@@ -205,57 +180,62 @@ def api_risk_summary():
 
 
 @portfolio_bp.route("/api/reports/weekly")
+@portfolio_bp.route("/api/reports/period")
 @cache.cached(timeout=60, query_string=True)
-def api_weekly_report():
+def api_period_report():
     args = _period_args()
     if args["period"] == "all" and not args["start_date"] and not args["end_date"]:
         args["period"] = "1w"
-    data = build_weekly_report(**args)
+    data = build_period_report(**args)
     return jsonify(data), (200 if data.get("ok") else 500)
 
 
 @portfolio_bp.route("/api/reports/weekly/save", methods=["POST"])
-def api_save_weekly_report():
+@portfolio_bp.route("/api/reports/period/save", methods=["POST"])
+def api_save_period_report():
     args = _period_args()
     if args["period"] == "all" and not args["start_date"] and not args["end_date"]:
         args["period"] = "1w"
-    data = save_weekly_report_markdown(**args)
-    cache.clear()
+    data = save_period_report_markdown(**args)
+    _invalidate_report_file_cache()
     return jsonify(data), (200 if data.get("ok") else 500)
 
 
 @portfolio_bp.route("/api/reports/weekly/files")
+@portfolio_bp.route("/api/reports/period/files")
 @cache.cached(timeout=10)
-def api_weekly_report_files():
-    data = list_weekly_report_files()
+def api_period_report_files():
+    data = list_period_report_files()
     return jsonify(data), (200 if data.get("ok") else 500)
 
 
 @portfolio_bp.route("/api/reports/weekly/file")
-def api_weekly_report_file():
+@portfolio_bp.route("/api/reports/period/file")
+def api_period_report_file():
     name = (request.args.get("name") or "").strip()
     if not name:
         return jsonify({"ok": False, "error": "name is required"}), 400
     try:
-        data = read_weekly_report_file(name)
+        data = read_period_report_file(name)
         return jsonify(data), (200 if data.get("ok") else 404)
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
 
 
 @portfolio_bp.route("/api/reports/weekly/file", methods=["POST"])
-def api_update_weekly_report_file():
+@portfolio_bp.route("/api/reports/period/file", methods=["POST"])
+def api_update_period_report_file():
     payload = request.get_json(silent=True) or {}
     name = str(payload.get("name") or "").strip()
     if not name:
         return jsonify({"ok": False, "error": "name is required"}), 400
     try:
-        data = update_weekly_report_file(
+        data = update_period_report_file(
             name=name,
             manual_markdown=str(payload.get("manual_markdown") or ""),
             tags=payload.get("tags") or [],
         )
-        cache.clear()
+        _invalidate_report_file_cache()
         return jsonify(data), (200 if data.get("ok") else 404)
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
@@ -285,7 +265,7 @@ def api_kr_security_master():
 def api_refresh_kr_security_master():
     try:
         data = refresh_kr_security_master()
-        cache.clear()
+        _invalidate_security_quality_cache()
         return jsonify({"ok": True, "kr_security_master": data})
     except Exception as exc:
         return jsonify({"ok": False, "error": str(exc)}), 500

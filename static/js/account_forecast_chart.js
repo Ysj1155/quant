@@ -318,6 +318,9 @@ async function loadAccountForecastHistory() {
 }
 
 function bindAccountForecastControls() {
+  if (window.AppBound?.accountForecastControls) return;
+  if (window.AppBound) window.AppBound.accountForecastControls = true;
+
   const refreshBtn = document.getElementById("account-refresh-btn");
   if (refreshBtn) {
     refreshBtn.addEventListener("click", renderAccountForecastChart);
@@ -347,8 +350,12 @@ function bindAccountForecastControls() {
   modelEls.forEach(el => el.addEventListener("change", renderAccountForecastChart));
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+window.loadAccountForecastPanel = async function () {
   bindAccountForecastControls();
   await renderAccountForecastChart();
   await loadAccountForecastHistory();
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindAccountForecastControls();
 });

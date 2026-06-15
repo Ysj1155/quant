@@ -28,7 +28,7 @@ window.setupWeeklyReportSave = function () {
 window.saveWeeklyReportMarkdown = function () {
   const button = window.$("weekly-report-save-button");
   const status = window.$("weekly-report-save-status");
-  const url = window.dashboardApiUrl("/api/reports/weekly/save");
+  const url = window.dashboardApiUrl("/api/reports/period/save");
 
   if (button) button.disabled = true;
   if (status) status.textContent = "마크다운 저장 중...";
@@ -53,7 +53,7 @@ window.saveWeeklyReportMarkdown = function () {
 };
 
 window.loadWeeklyReportArchive = function (selectedName) {
-  window.loadJsonAndRender("/api/reports/weekly/files", (data) => {
+  window.loadJsonAndRender("/api/reports/period/files", (data) => {
     window.renderWeeklyReportArchive(data.reports || [], selectedName);
   });
 };
@@ -96,7 +96,7 @@ window.selectWeeklyReportFile = function (name) {
     button.classList.toggle("active", button.dataset.reportName === name);
   });
 
-  const url = `/api/reports/weekly/file?name=${encodeURIComponent(name)}`;
+  const url = `/api/reports/period/file?name=${encodeURIComponent(name)}`;
   window.loadJsonAndRender(url, (data) => {
     window.AppState.selectedWeeklyReport = data.name;
     window.renderWeeklyReportFile(data);
@@ -144,7 +144,7 @@ window.saveWeeklyReportEdit = function () {
 
   if (status) status.textContent = "리포트 편집 저장 중...";
 
-  fetch("/api/reports/weekly/file", {
+  fetch("/api/reports/period/file", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -169,7 +169,7 @@ window.saveWeeklyReportEdit = function () {
 };
 
 window.loadWeeklyReportPanel = function () {
-  window.loadJsonAndRender(window.dashboardApiUrl("/api/reports/weekly"), (data) => {
+  window.loadJsonAndRender(window.dashboardApiUrl("/api/reports/period"), (data) => {
     window.renderWeeklyReport(data);
   });
   window.loadWeeklyReportArchive();
@@ -179,6 +179,7 @@ window.renderWeeklyReport = function (data) {
   window.renderWeeklyReportTitle(data);
   window.renderWeeklyReportSummary(data.summary_cards || []);
   window.renderWeeklyReportList("weekly-report-narrative", data.narrative || []);
+  window.renderWeeklyReportEvidence(data.evidence_cards || data.performance?.evidence_cards || []);
   window.renderWeeklyReportContributors("weekly-report-gainers-body", data.performance?.top_gainers || [], "수익 기여 종목이 없습니다.");
   window.renderWeeklyReportContributors("weekly-report-losers-body", data.performance?.top_losers || [], "손실 기여 종목이 없습니다.");
   window.renderWeeklyReportEvents(data.events?.highlights || []);
@@ -225,6 +226,33 @@ window.renderWeeklyReportList = function (id, rows) {
   }
 
   root.innerHTML = rows.map((item) => `<li>${window.escapeHTML(item)}</li>`).join("");
+};
+
+window.renderWeeklyReportEvidence = function (cards) {
+  const root = window.$("weekly-report-evidence");
+  if (!root) return;
+
+  if (!Array.isArray(cards) || cards.length === 0) {
+    root.innerHTML = `<div class="mini-card"><div class="mini-card-title">근거 스냅샷</div><div class="mini-card-value">N/A</div><div class="mini-card-sub">회고에 연결할 근거가 없습니다.</div></div>`;
+    return;
+  }
+
+  root.innerHTML = cards
+    .map((card) => {
+      const color = card.signed == null ? "" : ` style="color:${Number(card.signed) >= 0 ? "red" : "blue"};"`;
+      return `
+        <article class="evidence-card">
+          <div class="evidence-card-header">
+            <h5 class="evidence-card-title">${window.escapeHTML(card.title || "")}</h5>
+            <span class="evidence-card-source">${window.escapeHTML(card.source || "")}</span>
+          </div>
+          <div class="evidence-card-value"${color}>${window.escapeHTML(card.value || "-")}</div>
+          <p class="evidence-card-detail">${window.escapeHTML(card.detail || "")}</p>
+          <p class="evidence-card-question">${window.escapeHTML(card.question || "")}</p>
+        </article>
+      `;
+    })
+    .join("");
 };
 
 window.renderWeeklyReportContributors = function (tbodyId, rows, emptyText) {

@@ -289,6 +289,110 @@ def _build_daily_moves(account_values: pd.DataFrame, limit: int = 5) -> Dict:
     }
 
 
+def _krw_text(value) -> str:
+    if value is None:
+        return "-"
+    return f"{float(value):,.0f} KRW"
+
+
+def _pct_text(value) -> str:
+    if value is None:
+        return "-"
+    return f"{float(value):,.2f}%"
+
+
+def _build_evidence_cards(summary: Dict, advanced: Dict, contributors: Dict, asset_rows: List[Dict], daily_moves: Dict) -> List[Dict]:
+    cards: List[Dict] = []
+    period = advanced.get("period") or {}
+    start_date = period.get("start_date") or "-"
+    end_date = period.get("end_date") or "-"
+
+    cards.append({
+        "title": "기간 변화 근거",
+        "value": _krw_text(summary.get("period_change")),
+        "sub": _pct_text(summary.get("period_change_pct")),
+        "detail": (
+            f"{start_date} {_krw_text(advanced.get('start_account_value'))}에서 "
+            f"{end_date} {_krw_text(advanced.get('end_account_value'))}로 이동했습니다."
+        ),
+        "question": "이 변화가 가격 움직임 때문인지, 현금흐름 때문인지 분리해서 봤는가?",
+        "source": "계좌 총액 시계열",
+        "signed": summary.get("period_change"),
+    })
+
+    cards.append({
+        "title": "현금흐름 조정 성과",
+        "value": _pct_text(advanced.get("investment_twr_pct")),
+        "sub": f"단순수익률 {_pct_text(advanced.get('simple_return_pct'))}",
+        "detail": (
+            f"기간 중 추정 매수 {_krw_text(advanced.get('buy_cash_flow_est'))}, "
+            f"추정 매도 {_krw_text(advanced.get('sell_cash_flow_est'))}를 성과 해석에서 분리했습니다."
+        ),
+        "question": "추가 매수/매도가 성과를 키운 것인지, 보유 자산 자체가 움직인 것인지 확인했는가?",
+        "source": "투자 이벤트 추정 현금흐름",
+        "signed": advanced.get("investment_twr_pct"),
+    })
+
+    gainers = contributors.get("top_gainers") or []
+    losers = contributors.get("top_losers") or []
+    top_gain = gainers[0] if gainers else None
+    top_loss = losers[0] if losers else None
+    if top_gain or top_loss:
+        main = top_gain or top_loss
+        detail_parts = []
+        if top_gain:
+            detail_parts.append(f"최대 이익 기여: {top_gain.get('name')} {_krw_text(top_gain.get('profit_loss'))}")
+        if top_loss:
+            detail_parts.append(f"최대 손실 기여: {top_loss.get('name')} {_krw_text(top_loss.get('profit_loss'))}")
+        cards.append({
+            "title": "종목 기여 집중",
+            "value": str(main.get("name") or "-"),
+            "sub": _krw_text(main.get("profit_loss")),
+            "detail": " / ".join(detail_parts),
+            "question": "이번 성과를 설명하는 종목이 실제 판단의 핵심 종목이었는가?",
+            "source": "보유 종목 평가손익",
+            "signed": main.get("profit_loss"),
+        })
+
+    if asset_rows:
+        top_asset = asset_rows[0]
+        cards.append({
+            "title": "자산군 기여",
+            "value": str(top_asset.get("asset_type") or "-"),
+            "sub": f"비중 {_pct_text(top_asset.get('weight_pct'))}",
+            "detail": (
+                f"{top_asset.get('asset_type') or '-'} 평가금액은 {_krw_text(top_asset.get('evaluation_amount'))}, "
+                f"평가손익은 {_krw_text(top_asset.get('profit_loss'))}입니다."
+            ),
+            "question": "자산군 비중은 의도한 배분인가, 성과 때문에 커진 결과인가?",
+            "source": "자산군별 보유 평가",
+            "signed": top_asset.get("profit_loss"),
+        })
+
+    best_days = daily_moves.get("best_days") or []
+    worst_days = daily_moves.get("worst_days") or []
+    if best_days or worst_days:
+        best = best_days[0] if best_days else None
+        worst = worst_days[0] if worst_days else None
+        main_day = worst or best
+        detail_parts = []
+        if best:
+            detail_parts.append(f"최대 상승일 {best.get('date')} {_krw_text(best.get('change'))} ({_pct_text(best.get('change_pct'))})")
+        if worst:
+            detail_parts.append(f"최대 하락일 {worst.get('date')} {_krw_text(worst.get('change'))} ({_pct_text(worst.get('change_pct'))})")
+        cards.append({
+            "title": "일별 변동 증거",
+            "value": str(main_day.get("date") or "-"),
+            "sub": _krw_text(main_day.get("change")),
+            "detail": " / ".join(detail_parts),
+            "question": "큰 변동일에 포지션을 바꾸었는지, 그냥 통과했는지 기록할 만한가?",
+            "source": "일별 계좌 변화",
+            "signed": main_day.get("change"),
+        })
+
+    return cards
+
+
 @cache.memoize(timeout=60)
 def build_performance_summary(period: str = "all", start_date: str | None = None, end_date: str | None = None) -> Dict:
     latest_date, positions = latest_investment_positions()
@@ -326,24 +430,32 @@ def build_performance_summary(period: str = "all", start_date: str | None = None
             "weight_pct": safe_pct(float(row.get("evaluation_amount", 0.0) or 0.0), total_eval),
         }
 
+    contributors = _build_contributors(positions, total_eval=total_eval)
+    asset_type_summary = _build_asset_type_summary(positions, total_eval=total_eval)
+    monthly_changes = _build_monthly_changes(account_values)
+    daily_moves = _build_daily_moves(account_values)
+    advanced_returns = _build_advanced_returns(account_values, period, start_date, end_date)
+    summary = {
+        "latest_total_value": latest_total_value,
+        "invested_evaluation_amount": invested_eval,
+        "purchase_amount": purchase_amount,
+        "profit_loss": profit_loss,
+        "profit_rate": safe_pct(profit_loss, purchase_amount),
+        "period_change": period_change,
+        "period_change_pct": period_change_pct,
+        "position_count": int(len(positions)),
+        "top_position": top_position,
+    }
+
     return {
         "ok": True,
         "asof_date": latest_date,
         "period": period_range.__dict__,
-        "summary": {
-            "latest_total_value": latest_total_value,
-            "invested_evaluation_amount": invested_eval,
-            "purchase_amount": purchase_amount,
-            "profit_loss": profit_loss,
-            "profit_rate": safe_pct(profit_loss, purchase_amount),
-            "period_change": period_change,
-            "period_change_pct": period_change_pct,
-            "position_count": int(len(positions)),
-            "top_position": top_position,
-        },
-        "contributors": _build_contributors(positions, total_eval=total_eval),
-        "asset_type_summary": _build_asset_type_summary(positions, total_eval=total_eval),
-        "monthly_changes": _build_monthly_changes(account_values),
-        "daily_moves": _build_daily_moves(account_values),
-        "advanced_returns": _build_advanced_returns(account_values, period, start_date, end_date),
+        "summary": summary,
+        "contributors": contributors,
+        "asset_type_summary": asset_type_summary,
+        "monthly_changes": monthly_changes,
+        "daily_moves": daily_moves,
+        "advanced_returns": advanced_returns,
+        "evidence_cards": _build_evidence_cards(summary, advanced_returns, contributors, asset_type_summary, daily_moves),
     }

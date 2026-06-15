@@ -2,6 +2,31 @@ function signedColor(value) {
   return Number(value || 0) >= 0 ? "red" : "blue";
 }
 
+function accountValueChartStats(data) {
+  const values = (data.total_values || []).map((value) => Number(value));
+  const profits = (data.profits || []).map((value) => Number(value));
+  const latestValue = values[values.length - 1];
+  const latestProfit = profits[profits.length - 1] || 0;
+  const startValue = values[0];
+  const valueDelta = Number.isFinite(latestValue) && Number.isFinite(startValue)
+    ? latestValue - startValue
+    : 0;
+  const peakValue = values.reduce(
+    (peak, value) => (Number.isFinite(value) ? Math.max(peak, value) : peak),
+    Number.NEGATIVE_INFINITY
+  );
+  const drawdownFromPeak = Number.isFinite(peakValue) && peakValue > 0 && Number.isFinite(latestValue)
+    ? ((latestValue / peakValue) - 1) * 100
+    : 0;
+
+  return {
+    latestValue,
+    latestProfit,
+    valueDelta,
+    drawdownFromPeak,
+  };
+}
+
 window.loadPortfolioTable = function () {
   window.loadJsonAndRender("/get_portfolio_data", (data) => {
     const tbody = window.$("portfolio-table-body");
@@ -32,25 +57,76 @@ window.loadPortfolioTable = function () {
 };
 
 window.loadPieChart = function () {
-  window.loadJsonAndRender("/get_pie_chart_data", (data) => {
+  const mode = window.AppState.exposureMode || "asset_type";
+  window.loadJsonAndRender(`/api/portfolio/exposure?mode=${encodeURIComponent(mode)}`, (data) => {
     if (!window.$("pie-chart")) return;
+
+    const exposures = Array.isArray(data.exposures) ? data.exposures : [];
+    const labels = exposures.map((row) => row.label || "Unknown");
+    const values = exposures.map((row) => row.total_value || 0);
+    const total = Number(data.total_value || 0);
+    const hover = exposures.map((row) => {
+      const items = (row.items || [])
+        .slice(0, 6)
+        .map((item) => `${item.ticker || item.type || "Unknown"}: ${window.toLocaleNum(item.evaluation_amount)} KRW`)
+        .join("<br>");
+      const more = (row.items || []).length > 6 ? "<br>..." : "";
+      return `${row.label}<br>${window.toLocaleNum(row.total_value)} KRW<br>${window.toLocaleNum(row.weight_pct, 2)}%${items ? `<br><br>${items}${more}` : ""}`;
+    });
 
     Plotly.newPlot(
       "pie-chart",
       [{
-        labels: data.labels || [],
-        values: data.values || [],
+        labels,
+        values,
         type: "pie",
+        hole: 0.48,
+        sort: false,
         textinfo: "label+percent",
-        hoverinfo: "label+value+percent",
+        hoverinfo: "text",
+        text: hover,
+        marker: {
+          line: { color: "#ffffff", width: 2 },
+        },
       }],
       {
         margin: { t: 10, l: 10, r: 10, b: 10 },
         showlegend: false,
+        annotations: [{
+          text: `${window.toLocaleNum(total)}<br>KRW`,
+          showarrow: false,
+          font: { size: 13, color: "#17201b" },
+        }],
       },
       { responsive: true }
     );
+
+    const label = window.$("exposure-mode-label");
+    if (label) {
+      const modeLabels = {
+        asset_type: "자산군 기준",
+        holding: "종목 기준",
+        currency: "통화 기준",
+      };
+      label.textContent = modeLabels[mode] || "자산군 기준";
+    }
   });
+};
+
+window.setupExposureModeControls = function () {
+  if (window.AppBound.exposureMode) return;
+
+  document.querySelectorAll("[data-exposure-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      window.AppState.exposureMode = button.dataset.exposureMode || "asset_type";
+      document.querySelectorAll("[data-exposure-mode]").forEach((item) => {
+        item.classList.toggle("active", item.dataset.exposureMode === window.AppState.exposureMode);
+      });
+      window.loadPieChart();
+    });
+  });
+
+  window.AppBound.exposureMode = true;
 };
 
 window.onDateSelected = function (dateStr) {
@@ -65,15 +141,23 @@ window.loadAccountChart = function () {
   window.loadJsonAndRender(window.dashboardApiUrl("/get_account_value_data"), (data) => {
     if (!window.$("profit-chart")) return;
 
-    const latestValue = window.toLocaleNum(data.latest_value);
-    const latestProfit = Number(data.latest_profit || 0);
+    const stats = accountValueChartStats(data);
+    const latestValue = window.toLocaleNum(stats.latestValue);
+    const latestProfit = Number(stats.latestProfit || 0);
+    const valueDelta = Number(stats.valueDelta || 0);
+    const drawdownFromPeak = Number(stats.drawdownFromPeak || 0);
+    const periodLabel = data.period?.label || "조회 구간";
+    const latestDate = data.dates?.[data.dates.length - 1] || "-";
     const totalValueEl = window.$("total-value");
     if (totalValueEl) {
       totalValueEl.innerHTML = `
-        <div class="mini-card-title">현재 총자산</div>
+        <div class="mini-card-title">차트 기준 총자산</div>
         <div class="mini-card-value">${latestValue} KRW</div>
         <div class="mini-card-sub" style="color:${signedColor(latestProfit)}; font-weight:700;">
-          시작 대비 ${latestProfit.toFixed(2)}%
+          ${window.escapeHTML(periodLabel)} 시작 대비 ${latestProfit.toFixed(2)}%
+        </div>
+        <div class="mini-card-sub">
+          기준일 ${window.escapeHTML(latestDate)} · 변화 ${window.toLocaleNum(valueDelta)} KRW · 고점 대비 ${drawdownFromPeak.toFixed(2)}%
         </div>
       `;
     }
@@ -82,11 +166,12 @@ window.loadAccountChart = function () {
       x: data.dates || [],
       y: data.total_values || [],
       type: "scatter",
-      mode: "lines+markers",
+      mode: "lines",
       name: "총자산",
-      yaxis: "y1",
+      xaxis: "x",
+      yaxis: "y",
       line: { color: "#256f5b", width: 3 },
-      marker: { size: 5 },
+      hovertemplate: "날짜=%{x}<br>총자산=%{y:,.0f} KRW<extra></extra>",
     };
 
     const profitTrace = {
@@ -94,31 +179,64 @@ window.loadAccountChart = function () {
       y: data.profits || [],
       type: "scatter",
       mode: "lines",
-      name: "수익률",
+      name: "기간 수익률",
+      xaxis: "x2",
       yaxis: "y2",
-      line: { color: "#2f5f98", dash: "dot", width: 2 },
+      line: { color: signedColor(latestProfit), width: 2 },
+      fill: "tozeroy",
+      fillcolor: latestProfit >= 0 ? "rgba(196, 56, 43, 0.10)" : "rgba(21, 91, 212, 0.10)",
+      hovertemplate: "날짜=%{x}<br>기간 수익률=%{y:.2f}%<extra></extra>",
+    };
+
+    const latestMarkerTrace = {
+      x: data.dates?.length ? [data.dates[data.dates.length - 1]] : [],
+      y: data.total_values?.length ? [data.total_values[data.total_values.length - 1]] : [],
+      type: "scatter",
+      mode: "markers",
+      name: "현재",
+      xaxis: "x",
+      yaxis: "y",
+      marker: {
+        color: "#17201b",
+        size: 8,
+        line: { color: "#ffffff", width: 2 },
+      },
+      hovertemplate: "현재=%{y:,.0f} KRW<extra></extra>",
     };
 
     const layout = {
       title: "",
       hovermode: "x unified",
-      xaxis: { title: "날짜" },
+      xaxis: {
+        anchor: "y",
+        showticklabels: false,
+        matches: "x2",
+      },
       yaxis: {
         title: "총자산 (KRW)",
-        side: "left",
-        showgrid: false,
+        domain: [0.34, 1],
+        tickformat: ",.0f",
+        gridcolor: "#edf2ef",
+        zeroline: false,
+      },
+      xaxis2: {
+        title: "날짜",
+        anchor: "y2",
+        tickformat: "%Y-%m-%d",
       },
       yaxis2: {
-        title: "수익률 (%)",
-        overlaying: "y",
-        side: "right",
-        showgrid: false,
+        title: "기간 수익률 (%)",
+        domain: [0, 0.24],
+        gridcolor: "#edf2ef",
+        zeroline: true,
+        zerolinecolor: "#8a9690",
+        zerolinewidth: 1,
       },
-      legend: { orientation: "h", y: -0.18 },
-      margin: { t: 18, r: 50, l: 68, b: 64 },
+      legend: { orientation: "h", y: 1.08, x: 0 },
+      margin: { t: 36, r: 24, l: 72, b: 64 },
     };
 
-    Plotly.newPlot("profit-chart", [totalValueTrace, profitTrace], layout, { responsive: true }).then(() => {
+    Plotly.newPlot("profit-chart", [totalValueTrace, latestMarkerTrace, profitTrace], layout, { responsive: true }).then(() => {
       const latestDate = data.dates?.[data.dates.length - 1];
       if (latestDate) {
         window.onDateSelected(window.normalizeDate(latestDate));

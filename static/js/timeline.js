@@ -35,20 +35,28 @@ window.renderTimelineSummary = function (summary) {
   const counts = summary.counts || {};
   const total = Number(summary.total || 0);
   const returned = Number(summary.returned || 0);
-  const rangeLabel = summary.partial ? "최근 탐색 구간" : "전체 구간";
+  const period = summary.period || {};
+  const isBoundedPeriod = period.period && period.period !== "all";
+  const rangeLabel = summary.partial
+    ? "최근 탐색 구간"
+    : isBoundedPeriod
+      ? (period.label || "조회 구간")
+      : "전체 구간";
+  const totalLabel = summary.partial ? "최근 이벤트" : (isBoundedPeriod ? "기간 이벤트" : "전체 이벤트");
+  const returnedLabel = summary.partial ? "최근 이벤트 우선 표시" : (isBoundedPeriod ? "선택 기간 계산 기준" : "전체 계산 기준");
   const buyCount = (counts.buy_open || 0) + (counts.buy_add || 0);
   const sellCount = (counts.sell_partial || 0) + (counts.sell_full || 0);
 
   const cards = [
     {
-      label: summary.partial ? "최근 이벤트" : "전체 이벤트",
+      label: totalLabel,
       value: `${window.toLocaleNum(total)}건`,
       sub: `${rangeLabel}: ${summary.date_start || "-"} ~ ${summary.date_end || "-"}`,
     },
     {
       label: "표시 건수",
       value: `${window.toLocaleNum(returned)}건`,
-      sub: summary.partial ? "최근 이벤트 우선 표시" : "전체 계산 기준",
+      sub: returnedLabel,
     },
     {
       label: "매수 / 매도",
