@@ -311,11 +311,15 @@ window.renderWeeklyReportRisk = function (risk) {
   const topPosition = Array.isArray(risk.top_positions) ? risk.top_positions[0] : null;
   const currency = Array.isArray(risk.currency_exposure) ? risk.currency_exposure[0] : null;
   const asset = Array.isArray(risk.asset_type_exposure) ? risk.asset_type_exposure[0] : null;
+  const sector = Array.isArray(risk.portfolio_sector_exposure) ? risk.portfolio_sector_exposure[0] : null;
+  const role = Array.isArray(risk.portfolio_role_exposure) ? risk.portfolio_role_exposure[0] : null;
 
   rows.push(`최대 종목 비중 ${window.toLocaleNum(concentration.top1_weight_pct, 2)}%, 상위 3개 ${window.toLocaleNum(concentration.top3_weight_pct, 2)}%`);
   if (topPosition) rows.push(`최대 보유 종목은 ${topPosition.name}이며 비중은 ${window.toLocaleNum(topPosition.weight_pct, 2)}%입니다.`);
   if (currency) rows.push(`가장 큰 통화 노출은 ${currency.currency} ${window.toLocaleNum(currency.weight_pct, 2)}%입니다.`);
   if (asset) rows.push(`가장 큰 자산군 노출은 ${asset.asset_type} ${window.toLocaleNum(asset.weight_pct, 2)}%입니다.`);
+  if (sector) rows.push(`내 분류 기준 가장 큰 노출은 ${sector.portfolio_sector} ${window.toLocaleNum(sector.weight_pct, 2)}%입니다.`);
+  if (role) rows.push(`역할 기준 가장 큰 노출은 ${role.portfolio_role} ${window.toLocaleNum(role.weight_pct, 2)}%입니다.`);
   rows.push(`선택 기간 최대 낙폭은 ${window.toLocaleNum(accountRisk.max_drawdown_pct, 2)}%, 최근 변동성은 ${window.toLocaleNum(accountRisk.daily_volatility_pct, 2)}%입니다.`);
 
   window.renderWeeklyReportList("weekly-report-risk-list", rows);

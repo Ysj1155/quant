@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from extensions import cache
 from services.data_quality import build_data_quality_summary
 from services.dashboard_data import build_portfolio_exposure, load_account_value_rows, load_current_portfolio_rows
+from services.event_review import build_event_review_dataset
 from services.kr_security_master import get_kr_security_master_summary, refresh_kr_security_master
 from services.performance import build_performance_summary
 from services.portfolio import build_pnl_from_snapshots, build_pnl_series, build_pnl_timeseries
@@ -162,6 +163,17 @@ def api_timeline_events():
         full_scan=full_scan,
         **_period_args(),
     )
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/timeline/review-dataset")
+@cache.cached(timeout=60, query_string=True)
+def api_timeline_review_dataset():
+    limit = int(request.args.get("limit", 80))
+    args = _period_args()
+    if args["period"] == "all" and not args["start_date"] and not args["end_date"]:
+        limit = min(limit, 20)
+    data = build_event_review_dataset(limit=limit, **args)
     return jsonify(data), (200 if data.get("ok") else 500)
 
 

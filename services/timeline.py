@@ -113,6 +113,7 @@ def _base_event(date: str, event_type: str, row: Dict) -> Dict:
     key = str(row.get("key") or _position_key(row))
     return {
         "event_id": f"{date}|{event_type}|{key}",
+        "position_key": key,
         "date": date,
         "event_type": event_type,
         "event_group": "position",

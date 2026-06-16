@@ -26,6 +26,10 @@ window.loadTimelinePanel = function () {
     window.renderTimelineSummary(data.summary || {});
     window.renderTimelineEvents(data.events || []);
   });
+  window.loadJsonAndRender(window.dashboardApiUrl("/api/timeline/review-dataset", { limit: 80 }), (data) => {
+    window.renderEventReviewSummary(data.summary || {});
+    window.renderEventReviewRows(data.rows || []);
+  });
 };
 
 window.renderTimelineSummary = function (summary) {
@@ -122,6 +126,84 @@ window.renderTimelineEvents = function (events) {
         <div>${window.escapeHTML(confidence)}</div>
         <small>${window.escapeHTML(event.reason || "")}</small>
       </td>
+    `;
+    tbody.appendChild(tr);
+  });
+};
+
+window.renderEventReviewSummary = function (summary) {
+  const root = window.$("event-review-summary");
+  if (!root) return;
+
+  const counts = summary.counts || {};
+  const trackable = Number(summary.trackable_30obs || 0);
+  const favorable = Number(summary.favorable_30obs || 0);
+  const favorablePct = trackable > 0 ? (favorable / trackable) * 100 : 0;
+  const cards = [
+    {
+      label: "복기 표본",
+      value: `${window.toLocaleNum(summary.returned || 0)}건`,
+      sub: `전체 후보 ${window.toLocaleNum(summary.total_available || summary.total || 0)}건`,
+    },
+    {
+      label: "30관측치 추적",
+      value: `${window.toLocaleNum(trackable)}건`,
+      sub: `평가 가능 비율 ${window.toLocaleNum(summary.returned ? (trackable / summary.returned) * 100 : 0, 2)}%`,
+    },
+    {
+      label: "유리했던 행동",
+      value: `${window.toLocaleNum(favorable)}건`,
+      sub: `추적 가능 표본 중 ${window.toLocaleNum(favorablePct, 2)}%`,
+    },
+    {
+      label: "주요 결과",
+      value: Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0] || "-",
+      sub: Object.entries(counts).map(([key, value]) => `${key} ${value}`).join(" / ") || "-",
+    },
+  ];
+
+  root.innerHTML = cards
+    .map(
+      (card) => `
+      <div class="mini-card">
+        <div class="mini-card-title">${window.escapeHTML(card.label)}</div>
+        <div class="mini-card-value">${window.escapeHTML(card.value)}</div>
+        <div class="mini-card-sub">${window.escapeHTML(card.sub)}</div>
+      </div>
+    `
+    )
+    .join("");
+};
+
+window.renderEventReviewRows = function (rows) {
+  const tbody = window.$("event-review-body");
+  if (!tbody) return;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8">복기할 매매 이벤트가 없습니다.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+  rows.forEach((row) => {
+    const type = row.event_type || "";
+    const label = TIMELINE_LABELS[type] || type;
+    const badge = TIMELINE_BADGES[type] || "secondary";
+    const outcome = row.outcomes?.["30obs"] || {};
+    const forward = outcome.forward_return_pct;
+    const color = Number(forward || 0) >= 0 ? "red" : "blue";
+    const forwardText = forward == null ? "-" : `${window.toLocaleNum(forward, 2)}%`;
+    const outcomeText = `${outcome.label || row.label_30obs || "-"} (${forwardText})`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${window.escapeHTML(row.date || "")}</td>
+      <td><span class="badge text-bg-${badge}">${window.escapeHTML(label)}</span></td>
+      <td>${window.escapeHTML(row.name || "")}</td>
+      <td>${window.escapeHTML(row.portfolio_sector || "")}</td>
+      <td>${window.escapeHTML(row.portfolio_role || "")}</td>
+      <td>${window.toLocaleNum(row.event_unit_price_est || 0)} KRW</td>
+      <td style="color:${color}; font-weight:600;">${window.escapeHTML(outcomeText)}</td>
+      <td>${window.escapeHTML(row.review_prompt || "")}</td>
     `;
     tbody.appendChild(tr);
   });

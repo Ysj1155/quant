@@ -21,6 +21,8 @@
           <tr>
             <th>종목</th>
             <th>자산군</th>
+            <th>내 분류</th>
+            <th>역할</th>
             <th>평가금액</th>
             <th>비중</th>
             <th>손익률</th>
@@ -62,5 +64,43 @@
       </thead>
       <tbody id="risk-asset-body"></tbody>
     </table>
+  </div>
+
+  <div class="layout-two">
+    <div>
+      <h4 class="table-title">내 분류 노출</h4>
+      <div class="table-scroll">
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>분류</th>
+            <th>항목수</th>
+            <th>평가금액</th>
+            <th>비중</th>
+            <th>주요 종목</th>
+          </tr>
+          </thead>
+          <tbody id="risk-portfolio-sector-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h4 class="table-title">역할 노출</h4>
+      <div class="table-scroll">
+        <table class="table table-bordered table-sm">
+          <thead>
+          <tr>
+            <th>역할</th>
+            <th>항목수</th>
+            <th>평가금액</th>
+            <th>비중</th>
+            <th>주요 종목</th>
+          </tr>
+          </thead>
+          <tbody id="risk-portfolio-role-body"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </section>

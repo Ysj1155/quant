@@ -274,6 +274,8 @@ def build_weekly_report(
             "top_positions": _top_items(risk.get("top_positions") or []),
             "currency_exposure": _top_items(risk.get("currency_exposure") or []),
             "asset_type_exposure": _top_items(risk.get("asset_type_exposure") or []),
+            "portfolio_sector_exposure": _top_items(risk.get("portfolio_sector_exposure") or []),
+            "portfolio_role_exposure": _top_items(risk.get("portfolio_role_exposure") or []),
         },
         "data_quality": {
             "summary": quality_summary,

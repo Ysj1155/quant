@@ -7,6 +7,7 @@ import pandas as pd
 from extensions import cache
 from services.analysis_utils import currency_label, investment_positions, latest_snapshot, load_account_values, safe_pct
 from services.periods import filter_by_period
+from services.portfolio_labels import classify_position, mapped_portfolio_labels
 
 
 def _exposure_by(df: pd.DataFrame, column: str, total_value: float, label_name: str) -> List[Dict]:
@@ -32,6 +33,33 @@ def _exposure_by(df: pd.DataFrame, column: str, total_value: float, label_name: 
     return rows
 
 
+def _label_exposure_by(df: pd.DataFrame, column: str, total_value: float, label_name: str) -> List[Dict]:
+    if df.empty:
+        return []
+
+    grouped = (
+        df.groupby(column, dropna=False)
+        .agg({"evaluation_amount": "sum", "ticker": "count"})
+        .reset_index()
+        .rename(columns={column: label_name, "ticker": "count"})
+    )
+
+    rows = []
+    for row in grouped.sort_values("evaluation_amount", ascending=False).to_dict("records"):
+        label = str(row.get(label_name, "")).strip() or "미분류"
+        members = df[df[column].fillna("").astype(str) == label].sort_values("evaluation_amount", ascending=False)
+        top_items = [str(name).strip() for name in members["ticker"].head(3).tolist() if str(name).strip()]
+        amount = float(row.get("evaluation_amount", 0.0) or 0.0)
+        rows.append({
+            label_name: label,
+            "count": int(row.get("count", 0) or 0),
+            "evaluation_amount": amount,
+            "weight_pct": safe_pct(amount, total_value),
+            "top_items": top_items,
+        })
+    return rows
+
+
 def _top_positions(positions: pd.DataFrame, total_value: float, limit: int = 5) -> List[Dict]:
     if positions.empty:
         return []
@@ -43,6 +71,9 @@ def _top_positions(positions: pd.DataFrame, total_value: float, limit: int = 5) 
             "name": str(row.get("ticker", "")).strip(),
             "asset_type": str(row.get("type", "")).strip(),
             "currency": currency_label(row.get("currency", "")),
+            "portfolio_sector": str(row.get("portfolio_sector", "")).strip(),
+            "portfolio_role": str(row.get("portfolio_role", "")).strip(),
+            "risk_bucket": str(row.get("risk_bucket", "")).strip(),
             "evaluation_amount": amount,
             "weight_pct": safe_pct(amount, total_value),
             "profit_loss": float(row.get("profit_loss", 0.0) or 0.0),
@@ -117,6 +148,13 @@ def build_risk_summary(period: str = "all", start_date: str | None = None, end_d
 
     df = snapshot.copy()
     df["currency_group"] = df["currency"].apply(currency_label)
+    label_map = mapped_portfolio_labels()
+    labels = df.apply(
+        lambda row: classify_position(row.get("ticker"), row.get("type"), row.get("currency"), label_map),
+        axis=1,
+        result_type="expand",
+    )
+    df = pd.concat([df, labels], axis=1)
 
     total_value = float(df["evaluation_amount"].sum())
     positions = investment_positions(df)
@@ -124,6 +162,8 @@ def build_risk_summary(period: str = "all", start_date: str | None = None, end_d
     top = _top_positions(positions, total_value)
     currency_exposure = _exposure_by(df, "currency_group", total_value, "currency")
     asset_exposure = _exposure_by(df, "type", total_value, "asset_type")
+    portfolio_sector_exposure = _label_exposure_by(positions, "portfolio_sector", total_value, "portfolio_sector")
+    portfolio_role_exposure = _label_exposure_by(positions, "portfolio_role", total_value, "portfolio_role")
     account_values, period_range = filter_by_period(load_account_values(), "date", period, start_date, end_date)
     account_risk = _account_risk(account_values)
 
@@ -139,5 +179,7 @@ def build_risk_summary(period: str = "all", start_date: str | None = None, end_d
         "top_positions": top,
         "currency_exposure": currency_exposure,
         "asset_type_exposure": asset_exposure,
+        "portfolio_sector_exposure": portfolio_sector_exposure,
+        "portfolio_role_exposure": portfolio_role_exposure,
         "account_risk": account_risk,
     }

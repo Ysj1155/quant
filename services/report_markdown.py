@@ -288,6 +288,20 @@ def auto_markdown(report: Dict) -> str:
             [
                 ["최대 종목 비중", pct((risk.get("concentration") or {}).get("top1_weight_pct"))],
                 ["상위 3개 종목 비중", pct((risk.get("concentration") or {}).get("top3_weight_pct"))],
+                [
+                    "최대 내 분류",
+                    (
+                        f"{(risk.get('portfolio_sector_exposure') or [{}])[0].get('portfolio_sector', '-')}"
+                        f" {pct((risk.get('portfolio_sector_exposure') or [{}])[0].get('weight_pct'))}"
+                    ),
+                ],
+                [
+                    "최대 역할",
+                    (
+                        f"{(risk.get('portfolio_role_exposure') or [{}])[0].get('portfolio_role', '-')}"
+                        f" {pct((risk.get('portfolio_role_exposure') or [{}])[0].get('weight_pct'))}"
+                    ),
+                ],
                 ["최대 낙폭", pct((risk.get("account_risk") or {}).get("max_drawdown_pct"))],
                 ["최근 변동성", pct((risk.get("account_risk") or {}).get("daily_volatility_pct"))],
             ],
