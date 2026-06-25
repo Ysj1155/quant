@@ -1,0 +1,5 @@
+name,asset_type,portfolio_sector,portfolio_role,note
+Growth ETF,해외주식,글로벌 성장,핵심 성장,장기 성장 노출
+Domestic Equity,국내주식,국내 개별주,위성 투자,개별 판단 검증
+Gold Spot,금현물,대체자산,방어/헤지,환율과 위험 회피 관찰
+예수금,현금,현금,대기 자금,리밸런싱 여력

@@ -23,9 +23,9 @@ except ModuleNotFoundError:
 AUTO_REFRESH_CSV = os.getenv("AUTO_REFRESH_CSV", "false").lower() in ("1", "true", "yes", "y")
 
 
-def bootstrap_refresh():
+def bootstrap_refresh(force: bool = False):
     """1) data/*.csv 원본 → 중간산출물 생성  2) DB 마이그레이션  3) 캐시 무효화"""
-    if not AUTO_REFRESH_CSV:
+    if not force and not AUTO_REFRESH_CSV:
         print("ℹ️ AUTO_REFRESH_CSV=FALSE → CSV 갱신 스킵")
         return
 
@@ -103,6 +103,6 @@ if __name__ == "__main__":
     if args.refresh:
         # debug=True 리로더 2회 실행 방지
         if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or os.environ.get("WERKZEUG_RUN_MAIN") is None:
-            bootstrap_refresh()
+            bootstrap_refresh(force=True)
 
     app.run(debug=True)

@@ -1,0 +1,51 @@
+<section class="panel" id="reflection-log-card">
+  <div class="panel-head">
+    <div>
+      <h3>주간 회고 로그</h3>
+      <p id="reflection-log-status">최신 스냅샷 기준으로 이번주 로그를 준비합니다.</p>
+    </div>
+    <button class="btn btn-sm btn-primary" id="reflection-log-save-button" type="button">주간 로그 저장/갱신</button>
+  </div>
+
+  <div class="metric-grid" id="reflection-log-summary"></div>
+
+  <div class="report-block">
+    <h4>계산 기준 주간 자동 요약</h4>
+    <ul class="report-list" id="reflection-log-narrative"></ul>
+  </div>
+
+  <div class="report-archive-layout log-workbench">
+    <aside class="report-list-panel">
+      <h4>최근 로그</h4>
+      <div id="reflection-log-file-list" class="report-file-list"></div>
+
+      <h4>빠진 주</h4>
+      <div id="reflection-log-missing-list" class="report-file-list"></div>
+    </aside>
+
+    <div class="report-viewer-panel">
+      <div class="report-editor-toolbar">
+        <div>
+          <h4 id="reflection-log-editor-title">수동 회고 메모</h4>
+          <div class="muted" id="reflection-log-editor-meta">주간 파일을 만들면 이 메모가 함께 저장됩니다.</div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" id="reflection-log-memo-save-button" type="button">메모 저장</button>
+      </div>
+
+      <div class="report-tag-row">
+        <label for="reflection-log-tags-input">태그</label>
+        <input id="reflection-log-tags-input" type="text" placeholder="예: 리밸런싱 환율영향 현금비중">
+      </div>
+
+      <div class="report-editor always-open">
+        <label for="reflection-log-manual-editor">내 생각</label>
+        <textarea id="reflection-log-manual-editor" rows="16"></textarea>
+      </div>
+
+      <div class="report-block">
+        <h4>다음 질문</h4>
+        <ul class="report-list compact" id="reflection-log-questions"></ul>
+      </div>
+    </div>
+  </div>
+</section>

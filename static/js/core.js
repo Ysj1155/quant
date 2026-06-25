@@ -17,6 +17,7 @@ window.AppBound = {
   watchlistForm: false,
   privacyToggle: false,
   weeklyReportSave: false,
+  reflectionLog: false,
   exposureMode: false,
   fxForecastControls: false,
   accountForecastControls: false,

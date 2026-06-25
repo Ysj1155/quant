@@ -5,6 +5,7 @@
     <button class="dashboard-subtab" id="dashboard-subtab-performance" onclick="showDashboardSection('performance')" type="button">성과</button>
     <button class="dashboard-subtab" id="dashboard-subtab-risk" onclick="showDashboardSection('risk')" type="button">리스크</button>
     <button class="dashboard-subtab" id="dashboard-subtab-timeline" onclick="showDashboardSection('timeline')" type="button">이벤트</button>
+    <button class="dashboard-subtab" id="dashboard-subtab-log" onclick="showDashboardSection('log')" type="button">회고 로그</button>
     <button class="dashboard-subtab" id="dashboard-subtab-report" onclick="showDashboardSection('report')" type="button">회고 리포트</button>
     <button class="dashboard-subtab" id="dashboard-subtab-details" onclick="showDashboardSection('details')" type="button">날짜 상세</button>
     <button class="dashboard-subtab" id="dashboard-subtab-forecast" onclick="showDashboardSection('forecast')" type="button">예측 검토</button>
@@ -48,6 +49,10 @@
 
   <section class="dashboard-section" id="dashboard-section-timeline">
     {% include "partials/dashboard/_timeline.html" %}
+  </section>
+
+  <section class="dashboard-section" id="dashboard-section-log">
+    {% include "partials/dashboard/_log.html" %}
   </section>
 
   <section class="dashboard-section" id="dashboard-section-report">

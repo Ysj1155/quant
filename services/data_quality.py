@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from datetime import datetime
 from typing import Dict, List
 
 import pandas as pd
@@ -126,6 +127,8 @@ def _latest_value_checks(account_values: pd.DataFrame) -> tuple[List[Dict], Dict
     latest_meta: Dict = {
         "latest_snapshot_date": None,
         "latest_account_value_date": None,
+        "report_basis_date": None,
+        "snapshot_account_lag_days": None,
         "latest_snapshot_total": None,
         "latest_account_value": None,
         "diff": None,
@@ -148,9 +151,15 @@ def _latest_value_checks(account_values: pd.DataFrame) -> tuple[List[Dict], Dict
     latest_account_value = float(account_values["total_value"].iloc[-1])
     diff = latest_account_value - snapshot_total
     diff_pct = safe_pct(diff, snapshot_total)
+    lag_days = (
+        datetime.strptime(latest_date, "%Y-%m-%d").date()
+        - datetime.strptime(latest_account_date, "%Y-%m-%d").date()
+    ).days
 
     latest_meta.update({
         "latest_account_value_date": latest_account_date,
+        "report_basis_date": latest_account_date,
+        "snapshot_account_lag_days": lag_days,
         "latest_account_value": latest_account_value,
         "diff": diff,
         "diff_pct": diff_pct,
@@ -169,6 +178,25 @@ def _latest_value_checks(account_values: pd.DataFrame) -> tuple[List[Dict], Dict
         diff_pct,
         [f"snapshot={latest_date}", f"account_value={latest_account_date}"],
     ))
+
+    if lag_days > 0:
+        checks.append(_check(
+            "warning",
+            "계산 기준 지연",
+            f"최신 스냅샷은 {latest_date}이지만 성과/회고 계산 기준 총자산은 {latest_account_date}까지 반영되어 있습니다.",
+            lag_days,
+            [f"{lag_days}일 차이", "python app.py --refresh 실행 필요 가능성"],
+        ))
+    elif lag_days < 0:
+        checks.append(_check(
+            "warning",
+            "총자산 날짜 초과",
+            f"account_value.csv가 최신 스냅샷보다 {-lag_days}일 앞선 날짜까지 들어 있습니다.",
+            abs(lag_days),
+            ["원본 스냅샷 누락 여부 확인"],
+        ))
+    else:
+        checks.append(_check("ok", "계산 기준 최신화", "최신 스냅샷과 총자산 계산 기준 날짜가 일치합니다."))
 
     return checks, latest_meta
 

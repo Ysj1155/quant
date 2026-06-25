@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 from data.csv_manager import normalize_snapshot_csv, normalize_snapshot_df, to_float
+from services.analysis_utils import mask_account
 from extensions import cache
 
 DATE_PATTERNS = [
@@ -119,7 +120,7 @@ def load_snapshot(date: str) -> Dict[str, Any]:
 
     def holding_row(row) -> Dict[str, Any]:
         return {
-            "account": str(row.get("account_number", "")).strip(),
+            "account_label": mask_account(str(row.get("account_number", "")).strip()),
             "name": str(row.get("ticker", "")).strip(),
             "currency": str(row.get("currency", "")).strip(),
             "qty": to_float(row.get("quantity")),
@@ -139,7 +140,7 @@ def load_snapshot(date: str) -> Dict[str, Any]:
     for _, row in cash_rows.iterrows():
         cash_items.append({
             "type": str(row.get("type", "")).strip(),
-            "account": str(row.get("account_number", "")).strip(),
+            "account_label": mask_account(str(row.get("account_number", "")).strip()),
             "currency": str(row.get("currency", "")).strip(),
             "qty": to_float(row.get("quantity")),
             "eval_amount": _to_int(row.get("evaluation_amount")),

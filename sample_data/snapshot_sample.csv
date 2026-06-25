@@ -1,0 +1,5 @@
+type,account_number,ticker,currency,profit_loss,profit_rate,quantity,purchase_price,purchase_amount,evaluation_amount,evaluation_ratio
+해외주식,SAMPLE-ACCOUNT,Growth ETF,USD,120000,4.8,10,25000,2500000,2620000,32.75
+국내주식,SAMPLE-ACCOUNT,Domestic Equity,KRW,-45000,-2.1,20,105000,2100000,2055000,25.69
+금현물,SAMPLE-ACCOUNT,Gold Spot,KRW,30000,1.5,2,1000000,2000000,2030000,25.38
+예수금,SAMPLE-ACCOUNT,예수금,KRW,0,0,0,0,0,1295000,16.18

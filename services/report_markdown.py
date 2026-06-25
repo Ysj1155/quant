@@ -87,19 +87,27 @@ def manual_body(content: str) -> str:
 
 
 def manual_markdown() -> str:
-    return """## 내가 보는 해석
+    return """## 이번 기간 내 판단
 
-- 
+- 좋았던 판단:
+- 아쉬웠던 판단:
+- 아직 판단 보류:
 
-## 헷갈렸던 것
+## 매매 이벤트 복기
 
-- 
+- 매수/매도 이유:
+- 사후 결과:
+- 다음에 같은 상황이면:
 
-## 다음에 확인할 것
+## 감정과 컨디션
+
+- 확신/불안/FOMO/피로:
+- 로그를 건너뛴 이유:
+
+## 다음 확인
 
 - 
 """
-
 
 def replace_manual_body(content: str, manual_markdown_text: str) -> str:
     manual = str(manual_markdown_text or "").strip()
@@ -118,6 +126,8 @@ def has_manual_notes(manual_markdown_text: str) -> bool:
         if not text or text.startswith("#"):
             continue
         if text in ("-", "- ", "*", "* "):
+            continue
+        if text.startswith(("- ", "* ")) and text.rstrip().endswith(":"):
             continue
         meaningful.append(text)
     return bool(meaningful)

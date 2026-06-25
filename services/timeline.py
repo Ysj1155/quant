@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from extensions import cache
-from services.analysis_utils import EPS, is_cash_type, mask_account
+from services.analysis_utils import EPS, is_cash_type, mask_account, public_id
 from services.periods import resolve_period_range
 from services.snapshots import list_snapshot_dates, load_snapshot_frame
 
@@ -111,9 +111,11 @@ def _append_diff_events(events: List[Dict], current_date: str, prev_map: Dict[st
 def _base_event(date: str, event_type: str, row: Dict) -> Dict:
     account = str(row.get("account_number", "")).strip()
     key = str(row.get("key") or _position_key(row))
+    public_key = public_id(key, prefix="pos")
     return {
-        "event_id": f"{date}|{event_type}|{key}",
-        "position_key": key,
+        "event_id": public_id(date, event_type, key, prefix="evt"),
+        "position_key": public_key,
+        "_position_key": key,
         "date": date,
         "event_type": event_type,
         "event_group": "position",
@@ -242,6 +244,18 @@ def _append_full_sell(events: List[Dict], date: str, prev: Dict) -> None:
     })
     events.append(event)
 
+
+
+def _public_event(event: Dict) -> Dict:
+    return {key: value for key, value in event.items() if not str(key).startswith("_")}
+
+
+def public_timeline_payload(data: Dict) -> Dict:
+    if not data.get("ok"):
+        return data
+    out = dict(data)
+    out["events"] = [_public_event(event) for event in data.get("events") or []]
+    return out
 
 def _summarize_events(events: List[Dict], total: Optional[int], dates: List[str], partial: bool, scanned_start: Optional[str] = None) -> Dict:
     counts: Dict[str, int] = {}

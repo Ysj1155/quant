@@ -79,7 +79,7 @@ window.loadPnlForDate = function (date) {
               `
               <tr>
                 <td>${x.name || ""}</td>
-                <td>${x.account || ""}</td>
+                <td>${x.account_label || ""}</td>
                 <td>${x.buy_date || ""}</td>
                 <td>${window.toLocaleNum(x.qty)}</td>
                 <td>${window.toLocaleNum(x.buy_amount)}</td>
@@ -108,7 +108,7 @@ window.loadPnlForDate = function (date) {
               `
               <tr>
                 <td>${x.name || ""}</td>
-                <td>${x.account || ""}</td>
+                <td>${x.account_label || ""}</td>
                 <td>${x.buy_date || ""}</td>
                 <td>${x.sell_date || ""}</td>
                 <td>${x.last_hold_date || ""}</td>

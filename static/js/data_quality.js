@@ -67,6 +67,8 @@ window.renderDataQualitySummary = function (summary) {
   const status = summary.status || "info";
   const badge = DATA_QUALITY_BADGES[status] || "secondary";
   const latestDiffPct = summary.diff_pct == null ? "-" : `${Number(summary.diff_pct).toFixed(3)}%`;
+  const lagDays = Number(summary.snapshot_account_lag_days || 0);
+  const basisStatus = lagDays === 0 ? "일치" : lagDays > 0 ? `${lagDays}일 지연` : `${Math.abs(lagDays)}일 초과`;
 
   const cards = [
     {
@@ -79,6 +81,11 @@ window.renderDataQualitySummary = function (summary) {
       label: "스냅샷 범위",
       value: `${window.toLocaleNum(summary.snapshot_count || 0)}일`,
       sub: `${summary.date_start || "-"} ~ ${summary.date_end || "-"}`,
+    },
+    {
+      label: "계산 기준",
+      value: basisStatus,
+      sub: `스냅샷 ${summary.latest_snapshot_date || "-"} · 총자산 ${summary.report_basis_date || summary.latest_account_value_date || "-"}`,
     },
     {
       label: "총자산 관측치",

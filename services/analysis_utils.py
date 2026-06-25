@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 
 from data.csv_manager import ACCOUNT_VALUE_FILE
-from services.snapshots import list_snapshot_dates, load_snapshot_frame
 
 EPS = 1e-9
 CASH_TYPE_KEYWORD = "\uc608\uc218\uae08"
@@ -31,6 +31,12 @@ def mask_account(account: str) -> str:
         return "*" * len(account)
     return f"{account[:3]}***{account[-2:]}"
 
+
+
+def public_id(*parts: object, prefix: str = "id") -> str:
+    raw = "|".join(str(part or "").strip() for part in parts)
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+    return f"{prefix}_{digest}"
 
 def is_cash_type(value: object) -> bool:
     return CASH_TYPE_KEYWORD in str(value or "")
@@ -62,6 +68,8 @@ def load_account_values(path: Optional[str | Path] = None) -> pd.DataFrame:
 
 
 def latest_snapshot() -> tuple[str, pd.DataFrame]:
+    from services.snapshots import list_snapshot_dates, load_snapshot_frame
+
     dates = list_snapshot_dates()
     if not dates:
         return "", pd.DataFrame()

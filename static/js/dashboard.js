@@ -43,7 +43,7 @@ window.loadPortfolioTable = function () {
       const profitRate = Number(row.profit_rate || 0);
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${window.escapeHTML(row.account_number ?? "")}</td>
+        <td>${window.escapeHTML(row.account_label ?? "")}</td>
         <td>${window.escapeHTML(row.ticker ?? "")}</td>
         <td>${window.toLocaleNum(row.quantity)}</td>
         <td>${window.toLocaleNum(row.purchase_amount)} KRW</td>

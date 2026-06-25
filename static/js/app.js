@@ -179,6 +179,7 @@ window.loadDashboardSectionData = function (sectionId, options = {}) {
     performance: ["loadPerformancePanel"],
     risk: ["loadRiskPanel"],
     timeline: ["loadPnlPanel", "loadTimelinePanel"],
+    log: ["loadLogPanel"],
     report: ["loadWeeklyReportPanel"],
     forecast: ["loadAccountForecastPanel"],
   };

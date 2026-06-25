@@ -10,7 +10,7 @@ from services.portfolio import build_pnl_from_snapshots, build_pnl_series, build
 from services.risk import build_risk_summary
 from services.security_resolver import build_security_resolution_summary
 from services.snapshots import list_snapshot_dates, load_snapshot
-from services.timeline import build_investment_timeline
+from services.timeline import build_investment_timeline, public_timeline_payload
 from services.period_report import (
     build_period_report,
     list_period_report_files,
@@ -18,6 +18,7 @@ from services.period_report import (
     save_period_report_markdown,
     update_period_report_file,
 )
+from services.reflection_log import build_current_log, save_current_log, update_current_log
 
 portfolio_bp = Blueprint("portfolio", __name__)
 
@@ -32,6 +33,7 @@ def _period_args():
 
 def _invalidate_report_file_cache():
     cache.delete_memoized(api_period_report_files)
+    cache.delete_memoized(api_current_log)
 
 
 def _invalidate_security_quality_cache():
@@ -163,7 +165,7 @@ def api_timeline_events():
         full_scan=full_scan,
         **_period_args(),
     )
-    return jsonify(data), (200 if data.get("ok") else 500)
+    return jsonify(public_timeline_payload(data)), (200 if data.get("ok") else 500)
 
 
 @portfolio_bp.route("/api/timeline/review-dataset")
@@ -252,6 +254,30 @@ def api_update_period_report_file():
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
 
+
+@portfolio_bp.route("/api/log/current")
+@cache.cached(timeout=10)
+def api_current_log():
+    data = build_current_log()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/log/current/save", methods=["POST"])
+def api_save_current_log():
+    data = save_current_log()
+    _invalidate_report_file_cache()
+    return jsonify(data), (200 if data.get("ok") else 500)
+
+
+@portfolio_bp.route("/api/log/current", methods=["POST"])
+def api_update_current_log():
+    payload = request.get_json(silent=True) or {}
+    data = update_current_log(
+        manual_markdown_text=str(payload.get("manual_markdown") or ""),
+        tags=payload.get("tags") or [],
+    )
+    _invalidate_report_file_cache()
+    return jsonify(data), (200 if data.get("ok") else 500)
 
 @portfolio_bp.route("/api/data-quality/summary")
 @cache.cached(timeout=60)

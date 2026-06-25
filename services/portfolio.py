@@ -7,28 +7,31 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from extensions import cache
+from services.analysis_utils import EPS, is_cash_type, mask_account
 from services.periods import filter_date_strings
-from services.snapshots import list_snapshot_dates, load_snapshot
+from services.snapshots import list_snapshot_dates, load_snapshot_frame
 
 
 def _holdings_df_from_snapshot(date: str) -> pd.DataFrame:
-    snap = load_snapshot(date)
-    if "error" in snap:
-        return pd.DataFrame(columns=["account", "name", "qty", "buy_amount", "eval_amount", "pnl", "pnl_pct"])
+    df = load_snapshot_frame(date)
+    columns = ["account", "account_label", "name", "qty", "buy_amount", "eval_amount", "pnl", "pnl_pct", "type"]
+    if df.empty:
+        return pd.DataFrame(columns=columns)
 
-    rows = snap.get("holdings", []) or []
-    if not rows:
-        return pd.DataFrame(columns=["account", "name", "qty", "buy_amount", "eval_amount", "pnl", "pnl_pct"])
+    out = pd.DataFrame()
+    out["account"] = df["account_number"].fillna("").astype(str).str.strip()
+    out["account_label"] = out["account"].apply(mask_account)
+    out["name"] = df["ticker"].fillna("").astype(str).str.strip()
+    out["qty"] = pd.to_numeric(df["quantity"], errors="coerce").fillna(0.0)
+    out["buy_amount"] = pd.to_numeric(df["purchase_amount"], errors="coerce").fillna(0.0)
+    out["eval_amount"] = pd.to_numeric(df["evaluation_amount"], errors="coerce").fillna(0.0)
+    out["pnl"] = pd.to_numeric(df["profit_loss"], errors="coerce").fillna(0.0)
+    out["pnl_pct"] = pd.to_numeric(df["profit_rate"], errors="coerce").fillna(0.0)
+    out["type"] = df["type"].fillna("").astype(str).str.strip()
 
-    df = pd.DataFrame(rows)
-
-    # key 생성에 필요한 최소 컬럼 보장
-    for c in ["account", "name", "qty", "buy_amount", "eval_amount", "pnl", "pnl_pct"]:
-        if c not in df.columns:
-            df[c] = 0
-
-    return df
-
+    out = out[~out["type"].apply(is_cash_type)].copy()
+    out = out[(out["name"] != "") & ((out["qty"].abs() > EPS) | (out["eval_amount"].abs() > EPS))].copy()
+    return out[columns]
 
 @dataclass
 class PositionState:
@@ -102,7 +105,7 @@ def build_pnl_from_snapshots(asof_date: Optional[str] = None) -> Dict:
                 continue
             account, name = k.split("|", 1)
             realized.append({
-                "account": account,
+                "account_label": mask_account(account),
                 "name": name,
                 "buy_date": st.buy_date,
                 "sell_date": d,              # 이 날짜 스냅샷부터 안 보임
@@ -120,7 +123,7 @@ def build_pnl_from_snapshots(asof_date: Optional[str] = None) -> Dict:
     for k, st in states.items():
         account, name = k.split("|", 1)
         open_positions.append({
-            "account": account,
+            "account_label": mask_account(account),
             "name": name,
             "buy_date": st.buy_date,
             "asof_date": st.last_date,
@@ -238,7 +241,7 @@ def _build_sell_events_for_window(all_dates: List[str], filtered_dates: List[str
             events.append({
                 "date": d,
                 "type": "sell_full",
-                "account": (r.get("account") or ""),
+                "account_label": (r.get("account_label") or mask_account(r.get("account") or "")),
                 "name": (r.get("name") or ""),
                 "qty_sold": float(r.get("qty", 0) or 0),
                 "realized_pnl_est": float(r.get("pnl", 0) or 0),
@@ -254,7 +257,7 @@ def _build_sell_events_for_window(all_dates: List[str], filtered_dates: List[str
                 events.append({
                     "date": d,
                     "type": "sell_partial",
-                    "account": (pr.get("account") or ""),
+                    "account_label": (pr.get("account_label") or mask_account(pr.get("account") or "")),
                     "name": (pr.get("name") or ""),
                     "qty_sold": sold,
                     "realized_pnl_est": (pnl / pq) * sold,
@@ -295,7 +298,7 @@ def build_pnl_series() -> Dict:
             events.append({
                 "date": d,
                 "type": "sell_full",
-                "account": (r.get("account") or ""),
+                "account_label": (r.get("account_label") or mask_account(r.get("account") or "")),
                 "name": (r.get("name") or ""),
                 "qty_sold": float(r.get("qty", 0) or 0),
                 "realized_pnl_est": float(r.get("pnl", 0) or 0),
@@ -313,7 +316,7 @@ def build_pnl_series() -> Dict:
                 events.append({
                     "date": d,
                     "type": "sell_partial",
-                    "account": (pr.get("account") or ""),
+                    "account_label": (pr.get("account_label") or mask_account(pr.get("account") or "")),
                     "name": (pr.get("name") or ""),
                     "qty_sold": sold,
                     "realized_pnl_est": pnl_per_share * sold,

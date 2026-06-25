@@ -27,7 +27,7 @@ def _future_date(dates: List[str], event_date: str, horizon: int) -> Optional[st
 def _future_price(event: Dict, future_date: str | None) -> Optional[float]:
     if not future_date:
         return None
-    row = _positions_for_date(future_date).get(event.get("position_key"))
+    row = _positions_for_date(future_date).get(event.get("_position_key") or event.get("position_key"))
     if not row:
         return None
     price = _evaluation_price(row)

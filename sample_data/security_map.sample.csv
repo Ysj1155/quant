@@ -1,0 +1,4 @@
+name,symbol,market,currency,status,source,note
+Growth ETF,QQQ,US,USD,manual,sample,샘플용 외부 심볼
+Domestic Equity,000000,KR,KRW,manual,sample,샘플용 국내 종목코드
+Gold Spot,,KR,KRW,excluded,sample,외부 주식 가격 매칭 제외

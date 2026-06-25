@@ -5,7 +5,7 @@ from typing import Dict, List
 import pandas as pd
 
 from data.csv_manager import PORTFOLIO_FILE
-from services.analysis_utils import currency_label, is_cash_type, load_account_values
+from services.analysis_utils import currency_label, is_cash_type, load_account_values, mask_account
 
 
 def load_current_portfolio_rows(include_cash: bool = False) -> List[Dict]:
@@ -21,7 +21,7 @@ def load_current_portfolio_rows(include_cash: bool = False) -> List[Dict]:
             continue
 
         rows.append({
-            "account_number": str(row.get("account_number") or "").strip(),
+            "account_label": mask_account(str(row.get("account_number") or "").strip()),
             "type": asset_type,
             "ticker": ticker or asset_type,
             "currency": currency_label(row.get("currency")),
