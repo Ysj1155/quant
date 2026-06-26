@@ -26,33 +26,33 @@ AUTO_REFRESH_CSV = os.getenv("AUTO_REFRESH_CSV", "false").lower() in ("1", "true
 def bootstrap_refresh(force: bool = False):
     """1) data/*.csv 원본 → 중간산출물 생성  2) DB 마이그레이션  3) 캐시 무효화"""
     if not force and not AUTO_REFRESH_CSV:
-        print("ℹ️ AUTO_REFRESH_CSV=FALSE → CSV 갱신 스킵")
+        print("AUTO_REFRESH_CSV=false: CSV refresh skipped")
         return
 
     try:
-        print("🔄 CSV 재생성 시작")
+        print("CSV regeneration started")
         process_account_value()
         process_portfolio_data()
-        print("✅ CSV 재생성 완료")
+        print("CSV regeneration completed")
     except Exception as e:
-        print(f"❌ CSV 재생성 오류: {e}")
+        print(f"CSV regeneration error: {e}")
 
     try:
-        print("🔄 DB 마이그레이션 시작")
+        print("DB migration started")
         from db.migration import migrate_account_value, migrate_portfolio
 
         migrate_portfolio()
         migrate_account_value()
-        print("✅ DB 마이그레이션 완료")
+        print("DB migration completed")
     except Exception as e:
-        print(f"❌ DB 마이그레이션 오류: {e}")
+        print(f"DB migration error: {e}")
 
     # 데이터가 바뀌었으니 캐시 무효화
     try:
         cache.clear()
-        print("🧹 cache cleared")
+        print("cache cleared")
     except Exception as e:
-        print(f"⚠️ cache clear 실패: {e}")
+        print(f"cache clear failed: {e}")
 
 
 app = Flask(__name__)
@@ -101,8 +101,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.refresh:
-        # debug=True 리로더 2회 실행 방지
-        if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or os.environ.get("WERKZEUG_RUN_MAIN") is None:
+        # debug=True 리로더에서는 자식 프로세스에서만 refresh 실행
+        if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
             bootstrap_refresh(force=True)
 
     app.run(debug=True)

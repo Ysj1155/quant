@@ -1,19 +1,21 @@
 <div class="section-heading">
   <div>
-    <p class="eyebrow">Forecast Review</p>
-    <h2>예측 검토</h2>
+    <p class="eyebrow">Forecast Lab</p>
+    <h2>예측 실험</h2>
   </div>
 </div>
 
 <section class="panel" id="account-forecast-card">
   <div class="panel-heading">
-    <h3>계좌 총자산 예측</h3>
-    <span>예측은 매매 판단이 아니라 계좌 흐름을 해석하는 보조 데이터입니다.</span>
+    <h3>계좌 흐름 오차 기록</h3>
+    <span>예측값을 맞히는 화면이 아니라, 실제 계좌 흐름과 모델 오차를 나중에 복기하는 보조 실험입니다.</span>
   </div>
+
+  <p class="forecast-compact-note">이 영역은 매매 판단용 신호가 아닙니다. 저장된 예측과 실제값의 차이를 남겨, 계좌 흐름이 평소보다 크게 벗어난 구간을 회고할 때만 참고합니다.</p>
 
   <div class="control-row">
     <div>
-      <label class="form-label mb-1" for="account-horizon">예측 일수</label>
+      <label class="form-label mb-1" for="account-horizon">실험 일수</label>
       <select class="form-select form-select-sm" id="account-horizon">
         <option value="5">5일</option>
         <option selected value="7">7일</option>
@@ -33,16 +35,16 @@
     </div>
 
     <fieldset class="model-group">
-      <legend>모델 선택</legend>
+      <legend>비교 모델</legend>
       <label><input checked class="form-check-input account-model-check" type="checkbox" value="linear"> Linear</label>
       <label><input checked class="form-check-input account-model-check" type="checkbox" value="holt"> Holt</label>
       <label><input checked class="form-check-input account-model-check" type="checkbox" value="arima"> ARIMA</label>
     </fieldset>
 
     <div class="button-row">
-      <button class="btn btn-primary btn-sm" id="account-refresh-btn">다시 그리기</button>
-      <button class="btn btn-success btn-sm" id="account-save-btn">예측 저장</button>
-      <button class="btn btn-warning btn-sm" id="account-update-actuals-btn">실제값 반영</button>
+      <button class="btn btn-outline-secondary btn-sm" id="account-refresh-btn">실험 다시 그리기</button>
+      <button class="btn btn-outline-secondary btn-sm" id="account-save-btn">실험값 저장</button>
+      <button class="btn btn-outline-secondary btn-sm" id="account-update-actuals-btn">실제값 반영</button>
     </div>
   </div>
 
@@ -55,7 +57,7 @@
   <div class="metrics-table" id="account-forecast-metrics"></div>
 
   <div class="table-section-header">
-    <h4 class="table-title">계좌 예측 이력</h4>
+    <h4 class="table-title">예측 오차 이력</h4>
     <button class="btn btn-outline-secondary btn-sm" id="account-history-refresh-btn">이력 새로고침</button>
   </div>
   <div id="account-history-table"></div>

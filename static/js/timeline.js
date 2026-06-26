@@ -137,8 +137,11 @@ window.renderEventReviewSummary = function (summary) {
 
   const counts = summary.counts || {};
   const trackable = Number(summary.trackable_30obs || 0);
-  const favorable = Number(summary.favorable_30obs || 0);
-  const favorablePct = trackable > 0 ? (favorable / trackable) * 100 : 0;
+  const buyTotal = Number(summary.buy_total || 0);
+  const sellTotal = Number(summary.sell_total || 0);
+  const favorableBuy = Number(summary.favorable_buy_30obs || 0);
+  const defensiveSell = Number(summary.defensive_sell_30obs || 0);
+  const opportunitySell = Number(summary.opportunity_sell_30obs || 0);
   const cards = [
     {
       label: "복기 표본",
@@ -151,13 +154,13 @@ window.renderEventReviewSummary = function (summary) {
       sub: `평가 가능 비율 ${window.toLocaleNum(summary.returned ? (trackable / summary.returned) * 100 : 0, 2)}%`,
     },
     {
-      label: "유리했던 행동",
-      value: `${window.toLocaleNum(favorable)}건`,
-      sub: `추적 가능 표본 중 ${window.toLocaleNum(favorablePct, 2)}%`,
+      label: "매수 / 매도",
+      value: `${window.toLocaleNum(buyTotal)} / ${window.toLocaleNum(sellTotal)}`,
+      sub: `매수 의미상승 ${window.toLocaleNum(favorableBuy)} · 매도 방어 ${window.toLocaleNum(defensiveSell)}`,
     },
     {
-      label: "주요 결과",
-      value: Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0] || "-",
+      label: "매도 기회비용",
+      value: `${window.toLocaleNum(opportunitySell)}건`,
       sub: Object.entries(counts).map(([key, value]) => `${key} ${value}`).join(" / ") || "-",
     },
   ];
@@ -180,7 +183,7 @@ window.renderEventReviewRows = function (rows) {
   if (!tbody) return;
 
   if (!Array.isArray(rows) || rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8">복기할 매매 이벤트가 없습니다.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10">복기할 매매 이벤트가 없습니다.</td></tr>`;
     return;
   }
 
@@ -193,6 +196,8 @@ window.renderEventReviewRows = function (rows) {
     const forward = outcome.forward_return_pct;
     const color = Number(forward || 0) >= 0 ? "red" : "blue";
     const forwardText = forward == null ? "-" : `${window.toLocaleNum(forward, 2)}%`;
+    const threshold = row.threshold_pct == null ? "검증 제외" : `±${window.toLocaleNum(row.threshold_pct, 0)}%`;
+    const basis = row.threshold_basis || "기본";
     const outcomeText = `${outcome.label || row.label_30obs || "-"} (${forwardText})`;
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -201,6 +206,8 @@ window.renderEventReviewRows = function (rows) {
       <td>${window.escapeHTML(row.name || "")}</td>
       <td>${window.escapeHTML(row.portfolio_sector || "")}</td>
       <td>${window.escapeHTML(row.portfolio_role || "")}</td>
+      <td>${window.escapeHTML(row.risk_bucket || "")}</td>
+      <td>${window.escapeHTML(`${threshold} · ${basis}`)}</td>
       <td>${window.toLocaleNum(row.event_unit_price_est || 0)} KRW</td>
       <td style="color:${color}; font-weight:600;">${window.escapeHTML(outcomeText)}</td>
       <td>${window.escapeHTML(row.review_prompt || "")}</td>

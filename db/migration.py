@@ -42,6 +42,29 @@ def clean_float(val, default=0.0) -> float:
         return default
 
 
+def ensure_portfolio_history_table(cur):
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS portfolio_history (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            snapshot_date DATE NOT NULL,
+            account_number VARCHAR(32) NOT NULL,
+            ticker VARCHAR(255) NOT NULL,
+            quantity INT NOT NULL DEFAULT 0,
+            purchase_amount BIGINT NOT NULL DEFAULT 0,
+            evaluation_amount BIGINT NOT NULL DEFAULT 0,
+            profit_loss BIGINT NOT NULL DEFAULT 0,
+            profit_rate DOUBLE NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_portfolio_history_snapshot_account_ticker (
+                snapshot_date, account_number, ticker
+            ),
+            INDEX idx_portfolio_history_snapshot_date (snapshot_date),
+            INDEX idx_portfolio_history_ticker (ticker)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    """)
+
+
 def migrate_portfolio(csv_path: str = "data/portfolio_data.csv"):
     df = pd.read_csv(csv_path, encoding="utf-8-sig")
 
@@ -53,7 +76,8 @@ def migrate_portfolio(csv_path: str = "data/portfolio_data.csv"):
 
     for _, r in df.iterrows():
         ticker = r.get("ticker")
-        if not ticker: continue
+        if ticker is None or pd.isna(ticker) or str(ticker).strip() == "":
+            continue
 
         data = (
             r.get("account_number"),
@@ -68,7 +92,7 @@ def migrate_portfolio(csv_path: str = "data/portfolio_data.csv"):
         rows_current.append(data)
 
         # 히스토리용 데이터 (날짜 추가)
-        rows_history.append((today,) + data[1:7])  # date, ticker, qty, pur, eval, pnl, rate
+        rows_history.append((today,) + data[:7])  # date, account, ticker, qty, pur, eval, pnl, rate
 
     conn = get_connection()
     try:
@@ -76,6 +100,8 @@ def migrate_portfolio(csv_path: str = "data/portfolio_data.csv"):
         with conn.cursor() as cur:
             if not rows_current:
                 raise ValueError("portfolio_data.csv 에 유효한 행이 없습니다. portfolio 테이블 삭제를 중단합니다.")
+
+            ensure_portfolio_history_table(cur)
 
             # [성능 개선 1] 현재 잔고는 기존처럼 유지하되 트랜잭션 보장
             cur.execute("DELETE FROM portfolio")
@@ -91,22 +117,23 @@ def migrate_portfolio(csv_path: str = "data/portfolio_data.csv"):
             # 오늘 이미 마이그레이션 했다면 덮어쓰기
             cur.executemany("""
                 INSERT INTO portfolio_history (
-                    snapshot_date, ticker, quantity, 
-                    purchase_amount, evaluation_amount, 
+                    snapshot_date, account_number, ticker, quantity,
+                    purchase_amount, evaluation_amount,
                     profit_loss, profit_rate
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
                     quantity = VALUES(quantity),
+                    purchase_amount = VALUES(purchase_amount),
                     evaluation_amount = VALUES(evaluation_amount),
                     profit_loss = VALUES(profit_loss),
                     profit_rate = VALUES(profit_rate)
             """, rows_history)
 
         conn.commit()
-        print(f"✅ {today} 포트폴리오 마이그레이션 완료 (현재 + 히스토리)")
+        print(f"portfolio migration completed: {today} (current + history)")
     except Exception as e:
         conn.rollback()
-        print(f"❌ 오류 발생: {e}")
+        print(f"migration error: {e}")
         raise
     finally:
         conn.close()
@@ -123,7 +150,7 @@ def migrate_account_value(csv_path: str = "data/account_value.csv"):
         with conn.cursor() as cur:
             # 날짜가 겹치면 업데이트, 없으면 삽입 (데이터 누적)
             cur.executemany("""
-                INSERT INTO account_value (date, total_value) 
+                INSERT INTO account_value (date, total_value)
                 VALUES (%s, %s)
                 ON DUPLICATE KEY UPDATE total_value = VALUES(total_value)
             """, rows)

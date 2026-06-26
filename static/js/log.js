@@ -23,7 +23,7 @@ window.saveReflectionLog = function () {
   const button = window.$("reflection-log-save-button");
   const status = window.$("reflection-log-status");
   if (button) button.disabled = true;
-  if (status) status.textContent = "주간 로그 저장 중...";
+  if (status) status.textContent = "자동 요약 갱신 중...";
 
   fetch("/api/log/current/save", { method: "POST" })
     .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
@@ -31,11 +31,11 @@ window.saveReflectionLog = function () {
       if (!ok || !data?.ok) throw new Error(data?.error || "로그 저장에 실패했습니다.");
       window.clearClientCache?.();
       window.renderReflectionLog(data);
-      if (status) status.textContent = "주간 로그를 저장했습니다.";
+      if (status) status.textContent = "자동 요약을 최신 데이터로 갱신했습니다.";
     })
     .catch((err) => {
       console.error("saveReflectionLog failed", err);
-      if (status) status.textContent = `저장 실패: ${err.message || err}`;
+      if (status) status.textContent = `자동 요약 갱신 실패: ${err.message || err}`;
     })
     .finally(() => {
       if (button) button.disabled = false;
@@ -50,7 +50,7 @@ window.saveReflectionLogMemo = function () {
   if (!editor) return;
 
   if (button) button.disabled = true;
-  if (status) status.textContent = "수동 메모 저장 중...";
+  if (status) status.textContent = "내 메모 저장 중...";
 
   fetch("/api/log/current", {
     method: "POST",
@@ -65,11 +65,11 @@ window.saveReflectionLogMemo = function () {
       if (!ok || !data?.ok) throw new Error(data?.error || "메모 저장에 실패했습니다.");
       window.clearClientCache?.();
       window.renderReflectionLog(data);
-      if (status) status.textContent = "수동 메모를 저장했습니다.";
+      if (status) status.textContent = "내 메모를 저장했습니다.";
     })
     .catch((err) => {
       console.error("saveReflectionLogMemo failed", err);
-      if (status) status.textContent = `메모 저장 실패: ${err.message || err}`;
+      if (status) status.textContent = `내 메모 저장 실패: ${err.message || err}`;
     })
     .finally(() => {
       if (button) button.disabled = false;
@@ -85,8 +85,8 @@ window.renderReflectionLog = function (data) {
   if (status) {
     const latest = data.latest_data_date || "-";
     const basis = data.report_data_date || latest;
-    const state = current.exists ? "작성됨" : "아직 미작성";
-    status.textContent = `${current.label || "이번주"} · 리포트 기준 ${basis} · 최신 스냅샷 ${latest} · ${state}`;
+    const state = current.exists ? "저장된 로그 있음" : "이번주 로그 아직 없음";
+    status.textContent = `${current.label || "이번주"} · 기준 ${basis} · ${state}`;
   }
 
   window.renderReflectionLogSummary(draft.summary_cards || []);
@@ -100,8 +100,8 @@ window.renderReflectionLog = function (data) {
   const tags = window.$("reflection-log-tags-input");
   const editor = window.$("reflection-log-manual-editor");
 
-  if (title) title.textContent = current.exists ? "주간 수동 회고 메모" : "주간 수동 회고 초안";
-  if (meta) meta.textContent = current.filename ? `${current.filename} · ${current.start_date || "-"} ~ ${current.end_date || "-"}` : "-";
+  if (title) title.textContent = current.exists ? "이번주 내 생각" : "이번주 회고 초안";
+  if (meta) meta.textContent = current.filename ? `${current.start_date || "-"} ~ ${current.end_date || "-"} · ${current.filename}` : "-";
   if (tags) tags.value = (file.tags || []).join(" ");
   if (editor) editor.value = file.manual_markdown || data.manual_template || "";
 };
@@ -134,7 +134,7 @@ window.renderReflectionLogRecent = function (reports, currentName) {
   if (!root) return;
 
   if (!Array.isArray(reports) || reports.length === 0) {
-    root.innerHTML = `<div class="muted">저장된 로그가 없습니다.</div>`;
+    root.innerHTML = `<div class="muted">아직 저장된 주간 로그가 없습니다.</div>`;
     return;
   }
 
@@ -143,7 +143,7 @@ window.renderReflectionLogRecent = function (reports, currentName) {
       <div class="report-file-button ${report.name === currentName ? "active" : ""}">
         <div class="report-file-title">${window.escapeHTML(report.name || "")}</div>
         <div class="report-file-meta">${window.escapeHTML(report.period || "-")} · ${window.escapeHTML(report.updated_at || "-")}</div>
-        <div class="report-file-tags">${window.escapeHTML(report.has_manual_notes ? "수동 메모 있음" : "수동 메모 비어 있음")}</div>
+        <div class="report-file-tags">${window.escapeHTML(report.has_manual_notes ? "메모 있음" : "메모 없음")}</div>
       </div>
     `)
     .join("");
@@ -154,7 +154,7 @@ window.renderReflectionLogMissing = function (weeks) {
   if (!root) return;
 
   if (!Array.isArray(weeks) || weeks.length === 0) {
-    root.innerHTML = `<div class="muted">최근 주간 로그가 모두 작성되어 있습니다.</div>`;
+    root.innerHTML = `<div class="muted">최근 8주 안에 빠진 로그가 없습니다.</div>`;
     return;
   }
 

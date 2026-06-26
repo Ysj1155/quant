@@ -32,7 +32,7 @@ function buildAccountForecastTraces(data) {
     y: data.actual,
     type: "scatter",
     mode: "lines",
-    name: "Actual Account Value",
+    name: "실제 총자산",
     line: { width: 4 },
     connectgaps: false,
   });
@@ -101,12 +101,12 @@ function renderAccountForecastMetrics(data) {
       <table class="table table-bordered table-sm">
         <thead>
           <tr>
-            <th>Model</th>
+            <th>모델</th>
             <th>MAE</th>
             <th>RMSE</th>
             <th>MAPE</th>
-            <th>Direction Acc.</th>
-            <th>Ensemble Weight</th>
+            <th>방향 적중률</th>
+            <th>앙상블 가중치</th>
           </tr>
         </thead>
         <tbody>
@@ -132,11 +132,11 @@ async function renderAccountForecastChart() {
     const traces = buildAccountForecastTraces(data);
 
     const layout = {
-      title: "Account Value Actual vs Forecast Models",
+      title: "실제 총자산과 실험 모델 경로",
       hovermode: "x unified",
       margin: { t: 50, r: 20, b: 50, l: 70 },
-      xaxis: { title: "Date" },
-      yaxis: { title: "Account Value" },
+      xaxis: { title: "날짜" },
+      yaxis: { title: "총자산" },
       legend: { orientation: "h", y: -0.2 },
     };
 
@@ -191,7 +191,7 @@ async function saveAccountForecastSnapshot() {
     if (statusEl) {
       statusEl.innerHTML = `
         <span class="text-success">
-          저장 완료. run_date=${data.run_date}, inserted=${data.inserted}, skipped=${data.skipped}
+          실험값 저장 완료. run_date=${data.run_date}, inserted=${data.inserted}, skipped=${data.skipped}
         </span>
       `;
     }
@@ -278,18 +278,18 @@ function renderAccountForecastHistoryTable(data) {
       <table class="table table-bordered table-sm">
         <thead>
           <tr>
-            <th>Run Date</th>
-            <th>Model</th>
-            <th>Forecast Date</th>
-            <th>Predicted</th>
-            <th>Actual</th>
-            <th>Abs Error</th>
-            <th>Horizon</th>
-            <th>Backtest</th>
+            <th>실험일</th>
+            <th>모델</th>
+            <th>대상일</th>
+            <th>실험값</th>
+            <th>실제값</th>
+            <th>절대오차</th>
+            <th>일수</th>
+            <th>평가구간</th>
           </tr>
         </thead>
         <tbody>
-          ${rows || `<tr><td colspan="8">저장된 계좌 예측 이력이 없습니다.</td></tr>`}
+          ${rows || `<tr><td colspan="8">저장된 예측 실험 이력이 없습니다.</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -312,7 +312,7 @@ async function loadAccountForecastHistory() {
 
   } catch (err) {
     if (container) {
-      container.innerHTML = `<div class="alert alert-danger">계좌 이력 로드 실패: ${err.message}</div>`;
+      container.innerHTML = `<div class="alert alert-danger">예측 실험 이력 로드 실패: ${err.message}</div>`;
     }
   }
 }
